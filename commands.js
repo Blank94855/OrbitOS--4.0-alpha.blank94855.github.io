@@ -41,16 +41,6 @@ function dragElement(elmnt, headerId) {
     }
 }
 
-function triggerBSOD(errorCode) {
-    document.querySelector('.os-container').style.display = 'none';
-    document.getElementById('status-bar').style.display = 'none';
-    const bsodScreen = document.getElementById('bsod-screen');
-    const errorCodeEl = document.getElementById('bsod-error-code');
-    errorCodeEl.textContent = `Stop Code: ${errorCode}`;
-    bsodScreen.style.display = 'flex';
-    setTimeout(() => window.location.reload(), 5000);
-}
-
 const weatherData = [
     { city: "Bucharest, RO", temp: "19°C", desc: "Clear Skies" }, { city: "London, UK", temp: "15°C", desc: "Cloudy" },
     { city: "New York, US", temp: "22°C", desc: "Sunny" }, { city: "Tokyo, JP", temp: "28°C", desc: "Humid" },
@@ -326,4 +316,5 @@ const commands = {
         }
     },
 };
+
 
