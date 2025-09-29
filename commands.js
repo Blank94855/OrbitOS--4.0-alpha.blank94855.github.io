@@ -51,6 +51,59 @@ function triggerBSOD(errorCode) {
     setTimeout(() => window.location.reload(), 5000);
 }
 
+
+// --- FPS Monitoring and BSOD Trigger ---
+// This section continuously monitors performance and triggers a BSOD if the frame rate drops too low.
+let lastFrameTime = performance.now();
+const fpsHistory = [];
+const fpsHistorySize = 60; // Store the last 60 FPS readings for a stable average.
+let lowFpsConsecutiveFrames = 0;
+const lowFpsThreshold = 15; // The FPS limit that is considered critical.
+const lowFpsTriggerCount = 120; // Trigger BSOD if FPS is below threshold for ~2 seconds.
+
+function monitorFPS() {
+    // Stop if the OS is not active (e.g., BSOD screen is shown) to prevent re-triggering.
+    if (document.getElementById('bsod-screen').style.display === 'flex') {
+        return;
+    }
+
+    const now = performance.now();
+    const delta = now - lastFrameTime;
+    lastFrameTime = now;
+    const currentFps = 1000 / delta;
+
+    // Add the current FPS to our history array.
+    fpsHistory.push(currentFps);
+    if (fpsHistory.length > fpsHistorySize) {
+        fpsHistory.shift(); // Keep the array at a fixed size.
+    }
+
+    // Only start checking after we have a decent sample size for a reliable average.
+    if (fpsHistory.length < fpsHistorySize) {
+        requestAnimationFrame(monitorFPS);
+        return;
+    }
+
+    const avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+
+    // If the average FPS is below our threshold, increment the counter.
+    if (avgFps < lowFpsThreshold) {
+        lowFpsConsecutiveFrames++;
+    } else {
+        // Otherwise, reset the counter as performance has recovered.
+        lowFpsConsecutiveFrames = 0;
+    }
+
+    // If the FPS has been consistently low, trigger the BSOD.
+    if (lowFpsConsecutiveFrames >= lowFpsTriggerCount) {
+        triggerBSOD('CRITICAL_PERFORMANCE_DROP');
+        return; // Stop monitoring after triggering.
+    }
+
+    // Continue the loop.
+    requestAnimationFrame(monitorFPS);
+}
+
 const weatherData = [
     { city: "Bucharest, RO", temp: "19°C", desc: "Clear Skies" }, { city: "London, UK", temp: "15°C", desc: "Cloudy" },
     { city: "New York, US", temp: "22°C", desc: "Sunny" }, { city: "Tokyo, JP", temp: "28°C", desc: "Humid" },
@@ -327,4 +380,8 @@ const commands = {
     },
 };
 
+
+window.addEventListener('load', () => {
+    requestAnimationFrame(monitorFPS);
+});
 
