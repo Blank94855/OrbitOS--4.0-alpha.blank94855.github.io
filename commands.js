@@ -61,6 +61,7 @@ const commands = {
         <p><span class="highlight-secondary">weather</span>        - Shows weather information</p>
         <p><span class="highlight-secondary">fortune</span>        - Get a random fortune message</p>
         <p><span class="highlight-secondary">cowsay [text]</span>  - Display a cow saying your message</p>
+        <p><span class="highlight-secondary">hide [player]</span>  - Hides/shows the music or video player</p>
         <p><span class="highlight-secondary">music</span>          - Opens the music player</p>
         <p><span class="highlight-secondary">video</span>          - Opens the video player</p>
     `,
@@ -116,7 +117,7 @@ const commands = {
         dragElement(ffContainer, 'fastfetch-header');
         return '<p>Displaying system information...</p>';
     },
-    
+
     wiki: async (args) => {
         const query = args.trim();
         if (!query) return '<p>Usage: wiki [search query]</p>';
@@ -129,7 +130,7 @@ const commands = {
             const data = await response.json();
             const summary = data.extract_html || data.extract;
             const pageUrl = data.content_urls.desktop.page;
-            
+
             return `
                 <div>
                     <h3 class="highlight" style="margin-bottom: 0.5rem;">${data.title}</h3>
@@ -147,31 +148,62 @@ const commands = {
         if (document.getElementById('video-player-container')) return '<p class="error-message">Video player is already running.</p>';
         const playerContainer = document.createElement('div'); playerContainer.id = 'video-player-container';
         playerContainer.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; max-width: 90vw; background: var(--surface); backdrop-filter: blur(15px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; animation: fadeIn 0.3s ease;`;
-        playerContainer.innerHTML = `<div id="video-player-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline);"><span id="video-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px; font-size: 0.9em; font-weight: 500; color: var(--on-surface);">No video loaded</span><button id="close-video-player" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button></div><div style="width: 100%; background-color: black; border-radius: 0 0 11px 11px; overflow: hidden;"><video id="video-element" style="width: 100%; display: block;"></video></div><div style="padding: 12px 16px;"><input type="range" id="video-seek-bar" value="0" style="width: 100%; margin: 8px 0; accent-color: var(--accent-primary);"><div id="video-controls" style="display: flex; justify-content: center; align-items:center; gap: 15px;"><button id="video-play-pause-btn" style="background: transparent; border: none; color: white; cursor: pointer; opacity: 0.8; transition: opacity 0.2s ease, transform 0.2s ease;"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div></div>`;
+        playerContainer.innerHTML = `
+            <div id="video-player-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline);">
+                <span id="video-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px; font-size: 0.9em; font-weight: 500; color: var(--on-surface);">No video loaded</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                     <button id="hide-video-player" style="background: #ffbd2e; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; display:flex; justify-content:center; align-items:center; color: #995700; font-weight: bold; line-height:14px;">–</button>
+                     <button id="close-video-player" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button>
+                </div>
+            </div>
+            <div id="video-player-body">
+                <div style="width: 100%; background-color: black; border-radius: 0 0 11px 11px; overflow: hidden;"><video id="video-element" style="width: 100%; display: block;"></video></div>
+                <div style="padding: 12px 16px;">
+                    <input type="range" id="video-seek-bar" value="0" style="width: 100%; margin: 8px 0; accent-color: var(--accent-primary);">
+                    <div id="video-controls" style="display: flex; justify-content: center; align-items:center; gap: 15px;">
+                        <button id="video-play-pause-btn" style="background: transparent; border: none; color: white; cursor: pointer; opacity: 0.8; transition: opacity 0.2s ease, transform 0.2s ease;"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+                    </div>
+                </div>
+            </div>`;
         document.body.appendChild(playerContainer);
         const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.mp4'; fileInput.style.display = 'none'; document.body.appendChild(fileInput); fileInput.click();
-        const video = document.getElementById('video-element'), playBtn = document.getElementById('video-play-pause-btn'), seek = document.getElementById('video-seek-bar'), title = document.getElementById('video-title'), close = document.getElementById('close-video-player');
+        const video = document.getElementById('video-element'), playBtn = document.getElementById('video-play-pause-btn'), seek = document.getElementById('video-seek-bar'), title = document.getElementById('video-title'), close = document.getElementById('close-video-player'), hideBtn = document.getElementById('hide-video-player'), playerBody = document.getElementById('video-player-body');
         const playIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>', pauseIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
         playBtn.onmouseover = () => { playBtn.style.opacity = '1'; playBtn.style.transform = 'scale(1.1)'; }; playBtn.onmouseout = () => { playBtn.style.opacity = '0.8'; playBtn.style.transform = 'scale(1)'; };
         const stop = () => { video.pause(); if (video.src) URL.revokeObjectURL(video.src); playerContainer.remove(); fileInput.remove(); };
         fileInput.onchange = (e) => { const f = e.target.files[0]; if (f) { video.src = URL.createObjectURL(f); title.textContent = f.name; video.play(); playBtn.innerHTML = pauseIcon; } else { stop(); } };
         playBtn.onclick = () => { if (!video.src) return; if (video.paused) { video.play(); playBtn.innerHTML = pauseIcon; } else { video.pause(); playBtn.innerHTML = playIcon; } };
+        hideBtn.onclick = () => { const isHidden = playerBody.style.display === 'none'; playerBody.style.display = isHidden ? 'block' : 'none'; hideBtn.innerHTML = isHidden ? '–' : '+'; playerContainer.style.height = isHidden ? '' : 'auto'; };
         close.onclick = stop; video.ontimeupdate = () => { if (video.duration) seek.value = (video.currentTime / video.duration) * 100; }; seek.oninput = () => { if (video.duration) video.currentTime = (seek.value / 100) * video.duration; }; video.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; video.currentTime = 0; }
         dragElement(playerContainer, 'video-player-header'); return '<p>Opening video player...</p>';
     },
     music: () => {
         if (document.getElementById('music-player-container')) return '<p class="error-message">Music player is already running.</p>';
         const playerContainer = document.createElement('div'); playerContainer.id = 'music-player-container';
-        playerContainer.style.cssText = `position: fixed; top: 60%; left: 50%; transform: translate(-50%, -50%); width: 350px; background: var(--surface); backdrop-filter: blur(15px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; padding: 15px; animation: fadeIn 0.3s ease;`;
-        playerContainer.innerHTML = `<div id="music-player-header" style="display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 500; color: var(--on-surface);">Music Player</span><button id="close-music-player" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button></div><div style="text-align: center; padding: 20px 0;"><span id="song-title" style="display: block; margin-bottom: 10px; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No song loaded</span><audio id="audio-player"></audio><input type="range" id="seek-bar" value="0" style="width: 100%; margin-bottom: 15px; accent-color: var(--accent-secondary);"></div><div id="music-controls" style="display: flex; justify-content: center; align-items: center; gap: 20px;"><button id="play-pause-btn" style="background: var(--accent-secondary); color: var(--background); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease;"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>`;
+        playerContainer.style.cssText = `position: fixed; top: 60%; left: 50%; transform: translate(-50%, -50%); width: 350px; background: var(--surface); backdrop-filter: blur(15px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; animation: fadeIn 0.3s ease;`;
+        playerContainer.innerHTML = `
+            <div id="music-player-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px;">
+                <span style="font-weight: 500; color: var(--on-surface);">Music Player</span>
+                <div style="display:flex; align-items:center; gap: 8px;">
+                    <button id="hide-music-player" style="background: #ffbd2e; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; display:flex; justify-content:center; align-items:center; color: #995700; font-weight: bold; line-height:14px;">–</button>
+                    <button id="close-music-player" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button>
+                </div>
+            </div>
+            <div id="music-player-body" style="padding: 0 15px 15px;">
+                <div style="text-align: center; padding-top: 5px;"><span id="song-title" style="display: block; margin-bottom: 10px; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No song loaded</span><audio id="audio-player"></audio><input type="range" id="seek-bar" value="0" style="width: 100%; margin-bottom: 15px; accent-color: var(--accent-secondary);"></div>
+                <div id="music-controls" style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+                    <button id="play-pause-btn" style="background: var(--accent-secondary); color: var(--background); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease;"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+            </div>`;
         document.body.appendChild(playerContainer);
         const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.mp3'; fileInput.style.display = 'none'; document.body.appendChild(fileInput); fileInput.click();
-        const audio = document.getElementById('audio-player'), playBtn = document.getElementById('play-pause-btn'), seek = document.getElementById('seek-bar'), title = document.getElementById('song-title'), close = document.getElementById('close-music-player');
+        const audio = document.getElementById('audio-player'), playBtn = document.getElementById('play-pause-btn'), seek = document.getElementById('seek-bar'), title = document.getElementById('song-title'), close = document.getElementById('close-music-player'), hideBtn = document.getElementById('hide-music-player'), playerBody = document.getElementById('music-player-body');
         playBtn.onmouseover = () => playBtn.style.transform = 'scale(1.1)'; playBtn.onmouseout = () => playBtn.style.transform = 'scale(1)';
         const playIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>', pauseIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
         const stop = () => { audio.pause(); if (audio.src) URL.revokeObjectURL(audio.src); playerContainer.remove(); fileInput.remove(); };
         fileInput.onchange = (e) => { const f = e.target.files[0]; if (f) { audio.src = URL.createObjectURL(f); title.textContent = f.name; audio.play(); playBtn.innerHTML = pauseIcon; } else { stop(); } };
         playBtn.onclick = () => { if (!audio.src) return; if (audio.paused) { audio.play(); playBtn.innerHTML = pauseIcon; } else { audio.pause(); playBtn.innerHTML = playIcon; } };
+        hideBtn.onclick = () => { const isHidden = playerBody.style.display === 'none'; playerBody.style.display = isHidden ? 'block' : 'none'; hideBtn.innerHTML = isHidden ? '–' : '+'; };
         close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
         dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
     },
@@ -212,11 +244,31 @@ const commands = {
     calc: (args) => { try{if(!args)return"<p>Usage: calc [expression]</p>";const s=args.replace(/[^-()\d/*+.]/g,'');if(!s)return`<p class="error-message">Invalid characters.</p>`;return`<p>Result: ${new Function(`return ${s}`)()}</p>`}catch(e){return`<p class="error-message">Invalid expression.</p>`}},
     fortune: () => `<p class="highlight">Fortune:</p><p>${["A faithful friend is a strong defense.","A fresh start will put you on your way.","Your hard work is about to pay off."][Math.floor(Math.random()*3)]}</p>`,
     cowsay: (args) => { const m=args.trim()||"Moo!";return`<pre style="font-family:var(--font-mono);">${` _${'_'.repeat(m.length)}_ \n< ${m} >\n -${'-'.repeat(m.length)}- \n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||`}</pre>`;},
+    hide: (args) => {
+        const target = args.trim().toLowerCase();
+        if (!target) return '<p>Usage: hide [music|video]</p>';
+        let hideBtn, name;
+        if (target === 'music') {
+            hideBtn = document.getElementById('hide-music-player');
+            name = 'Music player';
+        } else if (target === 'video') {
+            hideBtn = document.getElementById('hide-video-player');
+            name = 'Video player';
+        } else {
+            return `<p class="error-message">Cannot hide '${target}'. Valid options are 'music' or 'video'.</p>`;
+        }
+        if (hideBtn) {
+            hideBtn.click();
+            const isHidden = hideBtn.innerHTML === '+';
+            return `<p>${isHidden ? 'Hiding' : 'Showing'} ${name}.</p>`;
+        } else {
+            return `<p class="error-message">${name} is not running.</p>`;
+        }
+    },
     tts: (args) => { if(!args.trim())return'<p>Usage: tts [text]</p>';if('speechSynthesis' in window){speechSynthesis.speak(new SpeechSynthesisUtterance(args));return'<p>Speaking...</p>'}else{return'<p class="error-message">TTS not supported.</p>'}},
     translate: (args) => { const p=args.split(' ');if(p.length<2)return'<p>Usage: translate [lang] [text]</p>';window.open(`https://translate.google.com/?sl=auto&tl=${p[0]}&text=${encodeURIComponent(p.slice(1).join(' '))}`,'_blank');return`<p>Opening Google Translate...</p>`;},
     reset: (args) => { if(args.trim()==='confirm'){deleteCookie('username');deleteCookie('font');deleteCookie('lastLogin');output.innerHTML='<p>Data reset. Rebooting...</p>';setTimeout(()=>window.location.reload(),1500);return''}return`<p class="error-message">WARNING: This will erase all saved settings. Type <span class="highlight">reset confirm</span> to proceed.</p>`;},
     setname: (args) => { const n=args.trim();if(!n)return'<p>Usage: setname [username]</p>';if(n.length>15)return'<p class="error-message">Username too long.</p>';config.username=n;setCookie('username',n,365);prompt.textContent=`${config.username}@${config.hostname}:~$ `;return`<p>Username changed to <span class="highlight">${n}</span>.</p>`;},
     weather: () => `<p class="highlight">Weather:</p><p>Bucharest, RO: 19°C, Clear Skies</p>`,
 };
-
 
