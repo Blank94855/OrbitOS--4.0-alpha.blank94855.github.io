@@ -24,13 +24,18 @@ const config = {
     batteryInfo: {}, 
 };
 
-function setCookie(name, value, days) { let expires = ""; if (days) { const date = new Date(); date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); expires = "; expires=" + date.toUTCString(); } document.cookie = name + "=" + (value || "") + expires + "; path=/"; }
+function setCookie(name, value, days) { let expires = ""; if (days) { const date = new Date(); date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); expires = "; expires=" + date.toUTCString(); } document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax"; }
 function getCookie(name) { const nameEQ = name + "="; const ca = document.cookie.split(';'); for (let i = 0; i < ca.length; i++) { let c = ca[i]; while (c.charAt(0) == ' ') c = c.substring(1, c.length); if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length); } return null; }
-function deleteCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; }
+function deleteCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;'; }
 
 function loadSettings() {
     const savedUser = getCookie('username');
     if (savedUser) config.username = savedUser;
+    
+    // FIX: Added the missing line to load the hostname from cookies.
+    const savedHost = getCookie('hostname');
+    if (savedHost) config.hostname = savedHost;
+
     const savedFont = getCookie('font');
     if (savedFont) applyFont(parseInt(savedFont));
 }
@@ -110,11 +115,11 @@ async function executeCommand(input) {
     const [command, ...args] = trimmedInput.split(' ');
     const lowerCaseCommand = command.toLowerCase();
     const commandFunction = commands[lowerCaseCommand] || (command === 'rm' && args[0] === '-rf' ? commands.rm : null);
-    
+
     if (typeof commandFunction === 'function') {
         if (trimmedInput && commandHistory[commandHistory.length - 1] !== trimmedInput) { commandHistory.push(trimmedInput); }
         historyIndex = commandHistory.length;
-        
+
         return await commandFunction(args.join(' '));
     } else {
         return `<p class="error-message">Command not found: ${command}. Type 'help' for available commands.</p>`;
@@ -125,8 +130,8 @@ async function displayResponse(input) {
     const commandPara = document.createElement('p');
     commandPara.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>${input.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
     output.appendChild(commandPara);
-    
-    
+
+
     const isAsync = commands[input.trim().split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
     let loadingIndicator;
     if (isAsync) {
@@ -135,9 +140,9 @@ async function displayResponse(input) {
         output.appendChild(loadingIndicator);
         scrollToBottom();
     }
-    
+
     const response = await executeCommand(input);
-    
+
     if (loadingIndicator) loadingIndicator.remove();
 
     if (response) { 
@@ -183,5 +188,4 @@ inputField.addEventListener('keydown', (e) => {
 });
 
 terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
-
 
