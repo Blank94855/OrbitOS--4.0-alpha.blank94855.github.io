@@ -2,133 +2,154 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>OrbitOS</title>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&family=Fira+Code&family=Source+Code+Pro&family=IBM+Plex+Mono&family=Anonymous+Pro&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Fira+Code&family=Source+Code+Pro&family=IBM+Plex+Mono&family=Anonymous+Pro&family=Roboto+Mono&family=Space+Mono&family=Ubuntu+Mono&family=VT323&family=Nanum+Gothic+Coding&family=Cutive+Mono&family=Share+Tech+Mono&family=Major+Mono+Display&family=Nova+Mono&family=Syne+Mono&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
-
         :root {
-            --md-sys-color-primary: #006399;
-            --md-sys-color-surface: #1a1c1e;
-            --md-sys-color-surface-container: #2e3133;
-            --md-sys-color-on-surface: #e2e2e5;
-            --md-sys-color-outline: #8b9198;
-            --terminal-accent: #00b4d8;
-            --terminal-error: #ff4444;
-            --terminal-success: #00c853;
+            --background: #0d1117;
+            --surface: rgba(22, 27, 34, 0.7);
+            --outline: #30363d;
+            --glow: rgba(139, 148, 158, 0.2);
+            --on-surface: #c9d1d9;
+            --accent-primary: #58a6ff;
+            --accent-secondary: #8b949e;
+            --error: #f85149;
+            --success: #3fb950;
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html, body { height: 100%; overflow: hidden; cursor: default; user-select: none; }
+
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(145deg, #141517, #1a1c1e);
-            color: var(--md-sys-color-on-surface);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
+            font-family: var(--font-main);
+            background: var(--background);
+            color: var(--on-surface);
+            display: flex; justify-content: center; align-items: center;
+            background-image: radial-gradient(ellipse at top, #1f242c, #0d1117);
         }
 
+        #lock-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            background: rgba(0, 0, 0, 0.4); z-index: 10000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+            opacity: 1; transition: opacity 0.7s ease, backdrop-filter 0.7s ease;
+        }
+        #lock-screen.hidden { opacity: 0; pointer-events: none; backdrop-filter: blur(0px); }
+
+        #lock-time { font-size: 8rem; font-weight: 700; letter-spacing: -5px; animation: fadeIn 1s ease-out; color: #fff; text-shadow: 0 0 15px rgba(255, 255, 255, 0.3); }
+        #lock-date { font-size: 1.5rem; margin-top: -1rem; margin-bottom: 2rem; opacity: 0.8; animation: fadeIn 1s 0.2s ease-out both; }
+        #unlock-button {
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white; padding: 1rem 2.5rem; border-radius: 50px; cursor: pointer;
+            font-size: 1rem; font-weight: 500;
+            transition: all 0.3s ease; animation: fadeIn 1s 0.4s ease-out both;
+            backdrop-filter: blur(5px);
+        }
+        #unlock-button:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+
+        #status-bar {
+            position: fixed; top: 0; left: 0; width: 100%; padding: 8px 16px;
+            background: rgba(13, 17, 23, 0.6);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.8rem; font-family: var(--font-mono); z-index: 100;
+            opacity: 0; animation: slideDown 0.8s 0.5s ease-out forwards;
+            border-bottom: 1px solid var(--outline);
+        }
+        #status-time, #status-battery { display: flex; align-items: center; gap: 8px; }
+
+        .os-container { width: 100%; height: 100%; padding: 40px 1rem 1rem 1rem; display: flex; justify-content: center; align-items: center; }
         .terminal {
-            width: 95%;
-            max-width: 900px;
-            background-color: var(--md-sys-color-surface);
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            
-            font-family: 'JetBrains Mono', monospace;
+            width: 100%; max-width: 900px; height: 100%; max-height: 85vh;
+            background-color: var(--surface);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 12px;
+            box-shadow: 0 10px 50px var(--glow), 0 0 0 1px var(--outline);
+            border: 1px solid var(--outline); font-family: var(--font-mono);
+            display: flex; flex-direction: column; opacity: 0; transform: translateY(20px);
+            animation: fadeIn 0.8s 0.7s ease-out forwards;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .terminal-header {
-            background-color: var(--md-sys-color-surface-container);
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(22, 27, 34, 0.5);
+            padding: 0.75rem 1rem; display: flex; align-items: center;
+            border-bottom: 1px solid var(--outline); flex-shrink: 0; cursor: grab;
         }
+        .terminal-header:active { cursor: grabbing; }
 
-        .terminal-title {
-            color: var(--terminal-accent);
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-left: 0.5rem;
-        }
-
+        .terminal-title { color: var(--on-surface); font-size: 0.9rem; font-weight: 500; margin-left: 0.5rem; }
         .terminal-controls { display: flex; gap: 0.5rem; margin-right: 1rem; }
-        .control-dot { width: 12px; height: 12px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.2); }
+        .control-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .control-dot:nth-child(1) { background-color: #ff5f56; } .control-dot:nth-child(2) { background-color: #ffbd2e; } .control-dot:nth-child(3) { background-color: #27c93f; }
 
-        .output {
-            padding: 1.5rem;
-            min-height: 60vh;
-            max-height: 70vh;
-            overflow-y: auto;
-            line-height: 1.6;
-            font-size: 0.9rem;
-        }
+        .output { padding: 1.5rem; flex-grow: 1; overflow-y: auto; line-height: 1.7; font-size: 0.9rem; }
+        .output > * { animation: textFadeIn 0.4s ease; }
+        .output p, .output div, .output pre { margin-bottom: 0.5rem; color: var(--on-surface); }
+        .highlight { color: var(--accent-primary); }
+        .highlight-secondary { color: var(--accent-secondary); }
+        .error-message { color: var(--error); }
 
-        .output p { margin-bottom: 0.5rem; opacity: 0.9; }
-        .highlight { color: var(--terminal-accent); font-weight: 500; }
-        .error-message { color: var(--terminal-error); }
-
-        .command {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            background-color: var(--md-sys-color-surface-container);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        #prompt { color: var(--terminal-accent); margin-right: 0.75rem; font-size: 0.9rem; }
-
-        .input-field {
-            background-color: transparent;
-            border: none;
-            color: var(--md-sys-color-on-surface);
-            font-size: 0.9rem;
-            width: 100%;
-            outline: none;
-            font-family: inherit; 
-        }
-
-        .input-field::placeholder { color: var(--md-sys-color-outline); opacity: 0.7; }
+        .command { display: flex; align-items: center; padding: 1rem 1.5rem; background-color: rgba(22, 27, 34, 0.5); border-top: 1px solid var(--outline); flex-shrink: 0; }
+        .input-field { background-color: transparent; border: none; color: var(--on-surface); font-size: 0.9rem; width: 100%; outline: none; font-family: inherit; }
+        .input-field:focus { caret-color: var(--accent-primary); }
+        .input-field::placeholder { color: var(--accent-secondary); opacity: 0.7; }
 
         .output::-webkit-scrollbar { width: 8px; }
-        .output::-webkit-scrollbar-track { background: var(--md-sys-color-surface); }
-        .output::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline); border-radius: 4px; }
+        .output::-webkit-scrollbar-track { background: transparent; }
+        .output::-webkit-scrollbar-thumb { background: var(--outline); border-radius: 4px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes textFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 600px) {
-            body { padding: 0.5rem; }
-            .terminal { width: 100%; height: 100vh; border-radius: 8px; }
-            .output { font-size: 0.85rem; padding: 1rem; max-height: calc(100vh - 120px); }
-            .command { padding: 0.75rem 1rem; }
-            #prompt, .input-field { font-size: 0.85rem; }
+            .os-container { padding: 40px 0 0 0; }
+            .terminal { width: 100%; height: 100%; max-height: none; border-radius: 0; }
+            #lock-time { font-size: 5rem; } #lock-date { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
-    <div class="terminal">
-        <div class="terminal-header">
-            <div class="terminal-controls">
-                <div class="control-dot"></div>
-                <div class="control-dot"></div>
-                <div class="control-dot"></div>
-            </div>
-            <span class="terminal-title">OrbitOS Terminal</span>
-        </div>
-        <div class="output" id="output"></div>
-        <div class="command">
-            <span id="prompt"></span>
-            <input id="input" class="input-field" type="text" autofocus placeholder="Type a command...">
+    <div id="lock-screen">
+        <div id="lock-time"></div>
+        <div id="lock-date"></div>
+        <button id="unlock-button">Unlock</button>
+    </div>
+
+    <div id="status-bar" style="display: none;">
+        <div id="status-time">OrbitOS</div>
+        <div id="status-battery">
+            <span id="battery-level">--%</span>
+            <svg id="battery-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
         </div>
     </div>
+
+    <div class="os-container">
+        <div class="terminal" style="display: none;">
+            <div class="terminal-header" id="terminal-header">
+                <div class="terminal-controls">
+                    <div class="control-dot"></div>
+                    <div class="control-dot"></div>
+                    <div class="control-dot"></div>
+                </div>
+                <span class="terminal-title">OrbitOS Terminal</span>
+            </div>
+            <div class="output" id="output"></div>
+            <div class="command" id="command-input-area">
+                <span id="prompt" class="highlight-secondary"></span>
+                <input id="input" class="input-field" type="text" autofocus autocomplete="off" spellcheck="false" placeholder="Type a command...">
+            </div>
+        </div>
+    </div>
+
     <script src="commands.js"></script>
     <script src="script.js"></script>
 </body>
