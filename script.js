@@ -10,6 +10,11 @@ let isSystemBricked = false;
 let commandHistory = [];
 let historyIndex = -1;
 
+let lastFrameTime = performance.now();
+let frameCount = 0;
+let fps = 0;
+let fpsMonitorEnabled = false;
+
 const bootSequence = [ "Starting system...", "Loading kernel modules...", "Mounting /system...", "Starting ueventd...", "Starting servicemanager...", "Starting zygote...", "Boot completed." ];
 const config = { 
     username: 'root', 
@@ -24,6 +29,29 @@ const config = {
     batteryInfo: {}, 
 };
 
+function checkFPS() {
+    if (!fpsMonitorEnabled) {
+        requestAnimationFrame(checkFPS);
+        return;
+    }
+
+    const currentTime = performance.now();
+    frameCount++;
+
+    if (currentTime - lastFrameTime > 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        lastFrameTime = currentTime;
+
+        if (fps > 0 && fps < 15) {
+            fpsMonitorEnabled = false; 
+            triggerBSOD('VIDEO_TDR_FAILURE');
+            return; 
+        }
+    }
+    requestAnimationFrame(checkFPS);
+}
+
 function setCookie(name, value, days) { let expires = ""; if (days) { const date = new Date(); date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); expires = "; expires=" + date.toUTCString(); } document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax"; }
 function getCookie(name) { const nameEQ = name + "="; const ca = document.cookie.split(';'); for (let i = 0; i < ca.length; i++) { let c = ca[i]; while (c.charAt(0) == ' ') c = c.substring(1, c.length); if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length); } return null; }
 function deleteCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;'; }
@@ -31,8 +59,7 @@ function deleteCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 
 function loadSettings() {
     const savedUser = getCookie('username');
     if (savedUser) config.username = savedUser;
-    
-    
+
     const savedHost = getCookie('hostname');
     if (savedHost) config.hostname = savedHost;
 
@@ -131,7 +158,6 @@ async function displayResponse(input) {
     commandPara.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>${input.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
     output.appendChild(commandPara);
 
-
     const isAsync = commands[input.trim().split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
     let loadingIndicator;
     if (isAsync) {
@@ -160,12 +186,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     loadSettings();
     updateLockScreenTime(); setInterval(updateLockScreenTime, 1000);
     dragElement(terminalElement, 'terminal-header');
+    
+    requestAnimationFrame(checkFPS);
 
     unlockButton.addEventListener('click', async () => {
         lockScreen.classList.add('hidden');
         statusBar.style.display = 'flex'; terminalElement.style.display = 'flex';
         updateStatusBar(); setInterval(updateStatusBar, 1000); updateBatteryStatus();
-        await simulateBootSequence(); finalizeBootSequence();
+        await simulateBootSequence(); 
+        finalizeBootSequence();
+        fpsMonitorEnabled = true;
     });
 });
 
