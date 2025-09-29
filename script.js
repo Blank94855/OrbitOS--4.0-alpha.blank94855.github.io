@@ -17,7 +17,7 @@ const config = {
     lastBootTime: new Date(), 
     systemInfo: { 
         os: 'OrbitOS', 
-        version: '4.0. - alpha 1',
+        version: '4.0. - alpha 2',
         build: `20250929-${Math.floor(Math.random() * 900) + 100}`,
         kernel: '6.5.0-orbit'
     }, 
