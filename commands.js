@@ -64,7 +64,8 @@ const commands = {
         <p class="highlight">--- [ System ] ---</p>
         <p><span class="highlight-secondary">fastfetch</span>      - Displays detailed system information</p>
         <p><span class="highlight-secondary">whoami</span>         - Shows current user and host</p>
-        <p><span class="highlight-secondary">setname [name]</span> - Set a custom username and hostname</p>
+        <p><span class="highlight-secondary">setname [name]</span> - Set a custom username</p>
+        <p><span class="highlight-secondary">sethost [name]</span> - Set a custom hostname</p>
         <p><span class="highlight-secondary">fonts</span>          - Change the terminal font</p>
         <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
         <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
@@ -211,7 +212,24 @@ const commands = {
     tts: (args) => { if(!args.trim())return'<p>Usage: tts [text]</p>';if('speechSynthesis' in window){speechSynthesis.speak(new SpeechSynthesisUtterance(args));return'<p>Speaking...</p>'}else{return'<p class="error-message">TTS not supported.</p>'}},
     translate: async (args) => { const parts = args.split(' '); if (parts.length < 2) { return '<p>Usage: translate [lang] [text]</p>'; } const targetLang = parts[0]; const textToTranslate = parts.slice(1).join(' '); const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`; try { const response = await fetch(url); if (!response.ok) { return '<p class="error-message">Translation service returned an error.</p>'; } const data = await response.json(); if (data && data[0] && data[0][0] && data[0][0][0]) { return `<p>${data[0][0][0]}</p>`; } else { return '<p class="error-message">Could not parse translation response.</p>'; } } catch (error) { console.error("Translation API error:", error); return '<p class="error-message">Failed to connect to the translation service. Check your connection.</p>'; } },
     reset: (args) => { if(args.trim()==='confirm'){deleteCookie('username');deleteCookie('hostname');deleteCookie('font');deleteCookie('lastLogin');localStorage.removeItem('orbitos_notes');output.innerHTML='<p>Data reset. Rebooting...</p>';setTimeout(()=>window.location.reload(),1500);return''}return`<p class="error-message">WARNING: This will erase all saved settings and notes. Type <span class="highlight">reset confirm</span> to proceed.</p>`;},
-    setname: (args) => { const n = args.trim(); if (!n) return '<p>Usage: setname [username]</p>'; if (n.length > 15) return '<p class="error-message">Username too long.</p>'; config.username = n; config.hostname = `${n}-os`; setCookie('username', n, 365); setCookie('hostname', config.hostname, 365); prompt.textContent = `${config.username}@${config.hostname}:~$ `; return `<p>Username changed to <span class="highlight">${n}</span> and hostname to <span class="highlight">${config.hostname}</span>.</p>`; },
+    setname: (args) => {
+        const n = args.trim();
+        if (!n) return '<p>Usage: setname [username]</p>';
+        if (n.length > 15) return '<p class="error-message">Username too long (max 15 chars).</p>';
+        config.username = n;
+        setCookie('username', n, 365);
+        prompt.textContent = `${config.username}@${config.hostname}:~$ `;
+        return `<p>Username changed to <span class="highlight">${n}</span>.</p>`;
+    },
+    sethost: (args) => {
+        const h = args.trim();
+        if (!h) return '<p>Usage: sethost [hostname]</p>';
+        if (h.length > 15) return '<p class="error-message">Hostname too long (max 15 chars).</p>';
+        config.hostname = h;
+        setCookie('hostname', h, 365);
+        prompt.textContent = `${config.username}@${config.hostname}:~$ `;
+        return `<p>Hostname changed to <span class="highlight">${h}</span>.</p>`;
+    },
     weather: () => { const report = weatherData[Math.floor(Math.random() * weatherData.length)]; return `<p class="highlight">Weather:</p><p>${report.city}: ${report.temp}, ${report.desc}</p>`; },
     bios: () => {
         document.querySelector('.terminal').style.display = 'none';
