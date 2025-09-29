@@ -266,7 +266,29 @@ const commands = {
         }
     },
     tts: (args) => { if(!args.trim())return'<p>Usage: tts [text]</p>';if('speechSynthesis' in window){speechSynthesis.speak(new SpeechSynthesisUtterance(args));return'<p>Speaking...</p>'}else{return'<p class="error-message">TTS not supported.</p>'}},
-    translate: (args) => { const p=args.split(' ');if(p.length<2)return'<p>Usage: translate [lang] [text]</p>';window.open(`https://translate.google.com/?sl=auto&tl=${p[0]}&text=${encodeURIComponent(p.slice(1).join(' '))}`,'_blank');return`<p>Opening Google Translate...</p>`;},
+    translate: async (args) => {
+        const parts = args.split(' ');
+        if (parts.length < 2) {
+            return '<p>Usage: translate [lang] [text]</p>';
+        }
+        const targetLang = parts[0];
+        const textToTranslate = parts.slice(1).join(' ');
+        try {
+            const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(textToTranslate)}&langpair=auto|${targetLang}`);
+            if (!response.ok) {
+                return '<p class="error-message">Translation service returned an error.</p>';
+            }
+            const data = await response.json();
+            if (data.responseStatus !== 200) {
+                 return `<p class="error-message">Translation failed: ${data.responseDetails}</p>`;
+            }
+            const translatedText = data.responseData.translatedText;
+            return `<p>${translatedText}</p>`;
+        } catch (error) {
+            console.error("Translation API error:", error);
+            return '<p class="error-message">Failed to connect to the translation service.</p>';
+        }
+    },
     reset: (args) => { if(args.trim()==='confirm'){deleteCookie('username');deleteCookie('font');deleteCookie('lastLogin');output.innerHTML='<p>Data reset. Rebooting...</p>';setTimeout(()=>window.location.reload(),1500);return''}return`<p class="error-message">WARNING: This will erase all saved settings. Type <span class="highlight">reset confirm</span> to proceed.</p>`;},
     setname: (args) => { const n=args.trim();if(!n)return'<p>Usage: setname [username]</p>';if(n.length>15)return'<p class="error-message">Username too long.</p>';config.username=n;setCookie('username',n,365);prompt.textContent=`${config.username}@${config.hostname}:~$ `;return`<p>Username changed to <span class="highlight">${n}</span>.</p>`;},
     weather: () => `<p class="highlight">Weather:</p><p>Bucharest, RO: 19°C, Clear Skies</p>`,
