@@ -1,208 +1,187 @@
-const output = document.getElementById('output');    
-const inputField = document.getElementById('input');    
+const output = document.getElementById('output');
+const inputField = document.getElementById('input');
 const prompt = document.getElementById('prompt');
 const terminalElement = document.querySelector('.terminal');
+const lockScreen = document.getElementById('lock-screen');
+const unlockButton = document.getElementById('unlock-button');
+const statusBar = document.getElementById('status-bar');
 
-let isSystemBricked = false;    
-let terminalVisible = true;    
-let stoppedProcesses = [];    
+let isSystemBricked = false;
+let commandHistory = [];
+let historyIndex = -1;
 
-const bootSequence = [    
-    "Starting system...", "Loading kernel modules...", "Initializing cgroup subsystems...", "Mounting /system...", "Mounting /vendor...", "Mounting /data...", 
-    "Setting permissions...", "Starting ueventd...", "Starting logd...", "Starting healthd...", "Starting surfaceflinger...", "Starting servicemanager...", 
-    "Starting zygote...", "Boot completed."
-];    
+const bootSequence = [ "Starting system...", "Loading kernel modules...", "Mounting /system...", "Starting ueventd...", "Starting servicemanager...", "Starting zygote...", "Boot completed." ];
+const config = { 
+    username: 'root', 
+    hostname: 'orbit', 
+    lastBootTime: new Date(), 
+    systemInfo: { 
+        os: 'OrbitOS', 
+        version: '4.0. - alpha 1',
+        build: `20250929-${Math.floor(Math.random() * 900) + 100}`,
+        kernel: '6.5.0-orbit'
+    }, 
+    batteryInfo: {}, 
+};
 
-function simulateBootSequence() {    
-    isSystemBricked = false; inputField.disabled = true; prompt.style.display = 'none'; output.innerHTML = '';    
-    return new Promise((resolve) => {    
-        bootSequence.forEach((message, index) => {    
-            setTimeout(() => {    
+function setCookie(name, value, days) { let expires = ""; if (days) { const date = new Date(); date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); expires = "; expires=" + date.toUTCString(); } document.cookie = name + "=" + (value || "") + expires + "; path=/"; }
+function getCookie(name) { const nameEQ = name + "="; const ca = document.cookie.split(';'); for (let i = 0; i < ca.length; i++) { let c = ca[i]; while (c.charAt(0) == ' ') c = c.substring(1, c.length); if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length); } return null; }
+function deleteCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; }
+
+function loadSettings() {
+    const savedUser = getCookie('username');
+    if (savedUser) config.username = savedUser;
+    const savedFont = getCookie('font');
+    if (savedFont) applyFont(parseInt(savedFont));
+}
+
+function simulateBootSequence() {
+    isSystemBricked = false; inputField.disabled = true; prompt.style.display = 'none'; output.innerHTML = '';
+    return new Promise((resolve) => {
+        bootSequence.forEach((message, index) => {
+            setTimeout(() => {
                 const p = document.createElement('p');
-                p.innerHTML = `<span class="highlight">[${index + 1}/${bootSequence.length}]</span> ${message}`;    
+                p.innerHTML = `<span class="highlight-secondary">[OK]</span> ${message}`;
                 output.appendChild(p);
                 scrollToBottom();
-                if (index === bootSequence.length - 1) setTimeout(resolve, 500);    
-            }, 200 * (index + 1));    
-        });    
-    });    
-}    
+                if (index === bootSequence.length - 1) setTimeout(resolve, 500);
+            }, 150 * (index + 1));
+        });
+    });
+}
 
-function finalizeBootSequence() {    
-    output.innerHTML = `    
-        <p>Welcome to <span class="highlight">OrbitOS</span></p>    
-        <p>Type 'help' for a list of commands</p>    
-        <p class="highlight">Security patch: 1 September 2025</p>    
-        <p class="highlight" style="color: var(--terminal-error); font-weight: bold;">
-        ⚠️ WARNING: You are running a BETA version of OrbitOS! Features are incomplete and the system may BREAK unexpectedly.
-        </p>`;    
-    inputField.disabled = false; prompt.style.display = 'inline'; inputField.focus();    
-    prompt.textContent = `${config.username}@${config.hostname}:~$ `;    
-    terminalVisible = true; stoppedProcesses = [];    
-}    
+function finalizeBootSequence() {
+    const lastLogin = getCookie('lastLogin');
+    let welcomeMessage = `<p>Welcome to <span class="highlight">OrbitOS ${config.systemInfo.version}</span></p><p>Type 'help' for a list of commands</p>`;
+    if (lastLogin) { welcomeMessage += `<p><br/>Last login: ${new Date(lastLogin).toLocaleString()}</p>`; }
+    setCookie('lastLogin', new Date().toISOString(), 365);
+    output.innerHTML = welcomeMessage;
+    inputField.disabled = false; prompt.style.display = 'inline-block'; inputField.focus();
+    prompt.textContent = `${config.username}@${config.hostname}:~$ `;
+}
 
-let commandHistory = []; let historyIndex = -1;    
+function updateLockScreenTime() {
+    const now = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    const date = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('lock-time').textContent = time;
+    document.getElementById('lock-date').textContent = date;
+}
 
-const config = {    
-    username: 'root', hostname: 'orbit', version: '3.5.4', lastBootTime: new Date().toLocaleString(),    
-    systemInfo: { os: 'OrbitOS', version: '3.5.4 - beta', kernel: '5.4.2-1070-gki', architecture: 'x86_64' },    
-    batteryInfo: { percentage: Math.floor(Math.random() * 100) + 1, charging: Math.random() > 0.5 },    
-    weatherInfo: {    
-        locations: [ { city: "Tokyo", country: "Japan" }, { city: "London", country: "UK" }, { city: "New York", country: "USA" }, { city: "Sydney", country: "Australia" }, { city: "Bucharest", country: "Romania" } ],    
-        conditions: [ "Clear skies", "Partly cloudy", "Overcast", "Light rain", "Heavy rain", "Thunderstorm", "Foggy", "Snowing", "Sunny", "Windy" ],    
-        precipitationTypes: [ "None", "Drizzle", "Rain", "Snow", "Sleet", "Hail" ]    
-    },
-    dynamicStorage: {}
-};    
+function updateStatusBar() {
+    const now = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('status-time').textContent = time;
+}
 
-function generateBatteryTimeRemaining(percentage, isCharging) {    
-    if (isCharging) {    
-        const minutes = (100 - percentage) * 1.5;    
-        if (percentage === 100) return "Fully charged";    
-        return `${Math.floor(minutes / 60)}h ${Math.floor(minutes % 60)}m until full`;    
-    } else {    
-        const minutes = percentage * 8;    
-        return `${Math.floor(minutes / 60)}h ${Math.floor(minutes % 60)}m remaining`;    
-    }    
-}    
+async function updateBatteryStatus() {
+    try {
+        const battery = await navigator.getBattery();
+        const updateLevel = () => {
+            config.batteryInfo.level = Math.floor(battery.level * 100);
+            config.batteryInfo.charging = battery.charging;
+            const levelEl = document.getElementById('battery-level');
+            const iconEl = document.getElementById('battery-icon');
+            if (levelEl) levelEl.textContent = `${config.batteryInfo.level}%`;
+            if (battery.charging) { iconEl.innerHTML = `<path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" y1="13" x2="23" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline>`; } 
+            else { iconEl.innerHTML = `<rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line>`; }
+        };
+        updateLevel();
+        battery.addEventListener('levelchange', updateLevel); battery.addEventListener('chargingchange', updateLevel);
+    } catch (e) { document.getElementById('status-battery').style.display = 'none'; }
+}
 
-let currentWeatherData = null;    
-function generateRandomWeather() {    
-    if (currentWeatherData) return currentWeatherData;    
-    const location = config.weatherInfo.locations[Math.floor(Math.random() * config.weatherInfo.locations.length)];    
-    const condition = config.weatherInfo.conditions[Math.floor(Math.random() * config.weatherInfo.conditions.length)];    
-    const precipitation = config.weatherInfo.precipitationTypes[Math.floor(Math.random() * config.weatherInfo.precipitationTypes.length)];    
-    currentWeatherData = { 
-        location, condition, precipitation,
-        temperature: Math.floor(Math.random() * 51) - 10,    
-        humidity: Math.floor(Math.random() * 76) + 20,    
-        windSpeed: Math.floor(Math.random() * 51),    
-        precipChance: Math.floor(Math.random() * 101)    
-    };    
-    return currentWeatherData;    
-}    
-
-function toggleTerminal(visible) { terminalElement.style.display = visible ? 'block' : 'none'; terminalVisible = visible; if(visible) inputField.focus(); }    
-
-function systemHalt() {    
-    isSystemBricked = true; inputField.disabled = true; prompt.style.display = 'none';    
-    const p = document.createElement('p');
-    p.classList.add('error-message');
-    p.innerHTML = `<span class="highlight">[SYSTEM HALTED]</span><br>System has been manually halted.<br>Critical process stopped.<br>System unable to continue operation.<br>Please reboot to restore functionality.`;    
-    output.appendChild(p);
-    scrollToBottom();    
-}    
-
-function getUptime() {    
-    const diff = new Date() - new Date(config.lastBootTime);    
-    let minutes = Math.floor(diff / 60000); let hours = Math.floor(minutes / 60); let days = Math.floor(hours / 24);
-    let uptimeString = '';    
-    if (days > 0) uptimeString += `${days}d `;
-    if (hours > 0) uptimeString += `${hours % 24}h `;
-    uptimeString += `${minutes % 60}m`;
-    return uptimeString;    
-}    
-
-function generateDynamicStorage() {
-    config.dynamicStorage = {
-        totalDisk: Math.floor(Math.random() * 401) + 100, 
-        freeDisk: Math.floor(Math.random() * 201) + 50,
-        totalRAM: [8, 12, 16, 32][Math.floor(Math.random() * 4)], 
-        freeRAM: Math.floor(Math.random() * 4) + 1
-    };
+function getUptime() {
+    const diff = new Date() - config.lastBootTime;
+    let minutes = Math.floor(diff / 60000); let hours = Math.floor(minutes / 60);
+    return `${hours % 24}h ${minutes % 60}m`;
 }
 
 function applyFont(fontNumber) {
-    const fontMap = {
-        1: "'JetBrains Mono', monospace",
-        2: "'Fira Code', monospace",
-        3: "'Source Code Pro', monospace",
-        4: "'IBM Plex Mono', monospace",
-        5: "'Anonymous Pro', monospace"
-    };
+    const fontMap = { 1: "'JetBrains Mono', monospace", 2: "'Fira Code', monospace", 3: "'Source Code Pro', monospace", 4: "'IBM Plex Mono', monospace", 5: "'Anonymous Pro', monospace", 6: "'Roboto Mono', monospace", 7: "'Space Mono', monospace", 8: "'Ubuntu Mono', monospace", 9: "'VT323', monospace", 10: "'Nanum Gothic Coding', monospace", 11: "'Cutive Mono', monospace", 12: "'Share Tech Mono', monospace", 13: "'Major Mono Display', monospace", 14: "'Nova Mono', monospace", 15: "'Syne Mono', monospace" };
     const fontFamily = fontMap[fontNumber];
-    if (fontFamily) {
-        terminalElement.style.fontFamily = fontFamily;
-        return true;
-    }
+    if (fontFamily) { terminalElement.style.fontFamily = fontFamily; return true; }
     return false;
 }
 
-function executeCommand(input) {
+async function executeCommand(input) {
     if (isSystemBricked) return '<p class="error-message">System halted. Please reboot.</p>';
-    const trimmedInput = input.trim();  
-    if (!trimmedInput) return '';  
-
-    const [command, ...args] = trimmedInput.split(' ');  
-    const lowerCaseCommand = command.toLowerCase();  
-    const commandFunction = commands[lowerCaseCommand];  
-    let outputResult;  
-    if (typeof commandFunction === 'function') {  
-        outputResult = commandFunction(args.join(' '));  
-    } else {  
-        outputResult = `<p class="error-message">Command not found: ${command}. Type 'help' for available commands.</p>`;  
-    }  
-    if (trimmedInput && commandHistory[commandHistory.length - 1] !== trimmedInput) {  
-        commandHistory.push(trimmedInput);  
-    }  
-    historyIndex = commandHistory.length;  
-    return outputResult;
+    const trimmedInput = input.trim(); if (!trimmedInput) return '';
+    const [command, ...args] = trimmedInput.split(' ');
+    const lowerCaseCommand = command.toLowerCase();
+    const commandFunction = commands[lowerCaseCommand] || (command === 'rm' && args[0] === '-rf' ? commands.rm : null);
+    
+    if (typeof commandFunction === 'function') {
+        if (trimmedInput && commandHistory[commandHistory.length - 1] !== trimmedInput) { commandHistory.push(trimmedInput); }
+        historyIndex = commandHistory.length;
+        
+        return await commandFunction(args.join(' '));
+    } else {
+        return `<p class="error-message">Command not found: ${command}. Type 'help' for available commands.</p>`;
+    }
 }
 
-function displayResponse(input) {
+async function displayResponse(input) {
     const commandPara = document.createElement('p');
-    commandPara.innerHTML = `<span class="highlight">${prompt.textContent}</span>${input}`;
+    commandPara.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>${input.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
     output.appendChild(commandPara);
-    const response = executeCommand(input);
-    if (response) {
-        const responseDiv = document.createElement('div');
-        responseDiv.innerHTML = response;
-        output.appendChild(responseDiv);
+    
+    
+    const isAsync = commands[input.trim().split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
+    let loadingIndicator;
+    if (isAsync) {
+        loadingIndicator = document.createElement('p');
+        loadingIndicator.textContent = 'Fetching...';
+        output.appendChild(loadingIndicator);
+        scrollToBottom();
+    }
+    
+    const response = await executeCommand(input);
+    
+    if (loadingIndicator) loadingIndicator.remove();
+
+    if (response) { 
+        const responseDiv = document.createElement('div'); 
+        responseDiv.innerHTML = response; 
+        output.appendChild(responseDiv); 
     }
     scrollToBottom();
     inputField.value = '';
 }
 
-function scrollToBottom() { setTimeout(() => { output.scrollTop = output.scrollHeight; }, 0); }
+function scrollToBottom() { setTimeout(() => { output.scrollTop = output.scrollHeight; }, 50); }
 
-window.addEventListener('DOMContentLoaded', async () => {    
-    generateDynamicStorage();
-    await simulateBootSequence();    
-    finalizeBootSequence();    
-});    
+window.addEventListener('DOMContentLoaded', async () => {
+    loadSettings();
+    updateLockScreenTime(); setInterval(updateLockScreenTime, 1000);
+    dragElement(terminalElement, 'terminal-header');
 
-inputField.addEventListener('keydown', (e) => {    
-    if (isSystemBricked) { e.preventDefault(); return; }    
-    if (e.key === 'Enter') {    
-        e.preventDefault();    
-        const input = inputField.value.trim();    
-        if (input) { displayResponse(input); } 
-        else { 
-            const p = document.createElement('p');
-            p.innerHTML = `<span class="highlight">${prompt.textContent}</span>`;
-            output.appendChild(p);
-            scrollToBottom(); 
-        }
-        inputField.value = ''; historyIndex = commandHistory.length;    
-    } else if (e.key === 'ArrowUp') {    
-        e.preventDefault();    
-        if (historyIndex > 0) { 
-            historyIndex--; 
-            inputField.value = commandHistory[historyIndex]; 
-            inputField.setSelectionRange(inputField.value.length, inputField.value.length);
-        }    
-    } else if (e.key === 'ArrowDown') {    
-        e.preventDefault();    
-        if (historyIndex < commandHistory.length - 1) { 
-            historyIndex++; 
-            inputField.value = commandHistory[historyIndex]; 
-            inputField.setSelectionRange(inputField.value.length, inputField.value.length);
-        } else { 
-            historyIndex = commandHistory.length; 
-            inputField.value = ''; 
-        }    
-    }    
-});    
+    unlockButton.addEventListener('click', async () => {
+        lockScreen.classList.add('hidden');
+        statusBar.style.display = 'flex'; terminalElement.style.display = 'flex';
+        updateStatusBar(); setInterval(updateStatusBar, 1000); updateBatteryStatus();
+        await simulateBootSequence(); finalizeBootSequence();
+    });
+});
 
-document.querySelector('.terminal').addEventListener('click', () => { if (!isSystemBricked) inputField.focus(); });
+inputField.addEventListener('keydown', (e) => {
+    if (isSystemBricked) { e.preventDefault(); return; }
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const input = inputField.value.trim();
+        if (input) { displayResponse(input); }
+        else { const p = document.createElement('p'); p.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>`; output.appendChild(p); scrollToBottom(); }
+        inputField.value = ''; historyIndex = commandHistory.length;
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (historyIndex > 0) { historyIndex--; inputField.value = commandHistory[historyIndex]; inputField.setSelectionRange(inputField.value.length, inputField.value.length); }
+    } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex < commandHistory.length - 1) { historyIndex++; inputField.value = commandHistory[historyIndex]; inputField.setSelectionRange(inputField.value.length, inputField.value.length); }
+        else { historyIndex = commandHistory.length; inputField.value = ''; }
+    }
+});
+
+terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
+
 
