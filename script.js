@@ -10,11 +10,6 @@ let isSystemBricked = false;
 let commandHistory = [];
 let historyIndex = -1;
 
-let lastFrameTime = performance.now();
-let frameCount = 0;
-let fps = 0;
-let fpsMonitorEnabled = false;
-
 const bootSequence = [ "Starting system...", "Loading kernel modules...", "Mounting /system...", "Starting ueventd...", "Starting servicemanager...", "Starting zygote...", "Boot completed." ];
 const config = { 
     username: 'root', 
@@ -30,6 +25,7 @@ const config = {
 };
 
 function triggerBSOD(errorCode) {
+    isSystemBricked = true;
     document.querySelector('.os-container').style.display = 'none';
     document.getElementById('status-bar').style.display = 'none';
     const bsodScreen = document.getElementById('bsod-screen');
@@ -37,30 +33,6 @@ function triggerBSOD(errorCode) {
     errorCodeEl.textContent = `Stop Code: ${errorCode}`;
     bsodScreen.style.display = 'flex';
     setTimeout(() => window.location.reload(), 5000);
-}
-
-function checkFPS() {
-    if (isSystemBricked || !fpsMonitorEnabled) {
-        requestAnimationFrame(checkFPS);
-        return;
-    }
-
-    const currentTime = performance.now();
-    frameCount++;
-
-    if (currentTime - lastFrameTime > 1000) {
-        fps = frameCount;
-        frameCount = 0;
-        lastFrameTime = currentTime;
-
-        if (fps > 0 && fps < 1) {
-            fpsMonitorEnabled = false; 
-            isSystemBricked = true;
-            triggerBSOD('VIDEO_TDR_FAILURE');
-            return;
-        }
-    }
-    requestAnimationFrame(checkFPS);
 }
 
 function setCookie(name, value, days) { let expires = ""; if (days) { const date = new Date(); date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); expires = "; expires=" + date.toUTCString(); } document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax"; }
@@ -84,6 +56,7 @@ function simulateBootSequence() {
     return new Promise((resolve) => {
         bootSequence.forEach((message, index) => {
             setTimeout(() => {
+                if(isSystemBricked) return;
                 const p = document.createElement('p');
                 p.innerHTML = `<span class="highlight-secondary">[OK]</span> ${message}`;
                 output.appendChild(p);
@@ -200,15 +173,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     updateLockScreenTime(); setInterval(updateLockScreenTime, 1000);
     dragElement(terminalElement, 'terminal-header');
 
-    requestAnimationFrame(checkFPS);
-
     unlockButton.addEventListener('click', async () => {
         lockScreen.classList.add('hidden');
         statusBar.style.display = 'flex'; terminalElement.style.display = 'flex';
         updateStatusBar(); setInterval(updateStatusBar, 1000); updateBatteryStatus();
         await simulateBootSequence();
         finalizeBootSequence();
-        fpsMonitorEnabled = true;
     });
 });
 
