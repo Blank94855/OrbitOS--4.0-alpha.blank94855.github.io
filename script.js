@@ -29,8 +29,18 @@ const config = {
     batteryInfo: {}, 
 };
 
+function triggerBSOD(errorCode) {
+    document.querySelector('.os-container').style.display = 'none';
+    document.getElementById('status-bar').style.display = 'none';
+    const bsodScreen = document.getElementById('bsod-screen');
+    const errorCodeEl = document.getElementById('bsod-error-code');
+    errorCodeEl.textContent = `Stop Code: ${errorCode}`;
+    bsodScreen.style.display = 'flex';
+    setTimeout(() => window.location.reload(), 5000);
+}
+
 function checkFPS() {
-    if (!fpsMonitorEnabled) {
+    if (isSystemBricked || !fpsMonitorEnabled) {
         requestAnimationFrame(checkFPS);
         return;
     }
@@ -45,8 +55,9 @@ function checkFPS() {
 
         if (fps > 0 && fps < 15) {
             fpsMonitorEnabled = false; 
+            isSystemBricked = true;
             triggerBSOD('VIDEO_TDR_FAILURE');
-            return; 
+            return;
         }
     }
     requestAnimationFrame(checkFPS);
@@ -59,6 +70,7 @@ function deleteCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 
 function loadSettings() {
     const savedUser = getCookie('username');
     if (savedUser) config.username = savedUser;
+
 
     const savedHost = getCookie('hostname');
     if (savedHost) config.hostname = savedHost;
@@ -158,6 +170,7 @@ async function displayResponse(input) {
     commandPara.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>${input.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
     output.appendChild(commandPara);
 
+
     const isAsync = commands[input.trim().split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
     let loadingIndicator;
     if (isAsync) {
@@ -186,14 +199,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     loadSettings();
     updateLockScreenTime(); setInterval(updateLockScreenTime, 1000);
     dragElement(terminalElement, 'terminal-header');
-    
+
     requestAnimationFrame(checkFPS);
 
     unlockButton.addEventListener('click', async () => {
         lockScreen.classList.add('hidden');
         statusBar.style.display = 'flex'; terminalElement.style.display = 'flex';
         updateStatusBar(); setInterval(updateStatusBar, 1000); updateBatteryStatus();
-        await simulateBootSequence(); 
+        await simulateBootSequence();
         finalizeBootSequence();
         fpsMonitorEnabled = true;
     });
@@ -218,4 +231,5 @@ inputField.addEventListener('keydown', (e) => {
 });
 
 terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
+
 
