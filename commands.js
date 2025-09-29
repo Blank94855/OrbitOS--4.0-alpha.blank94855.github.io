@@ -51,49 +51,6 @@ function triggerBSOD(errorCode) {
     setTimeout(() => window.location.reload(), 5000);
 }
 
-let lastFrameTime = performance.now();
-const fpsHistory = [];
-const fpsHistorySize = 60;
-let lowFpsConsecutiveFrames = 0;
-const lowFpsThreshold = 15;
-const lowFpsTriggerCount = 120;
-
-function monitorFPS() {
-    if (document.getElementById('bsod-screen').style.display === 'flex') {
-        return;
-    }
-
-    const now = performance.now();
-    const delta = now - lastFrameTime;
-    lastFrameTime = now;
-    const currentFps = 1000 / delta;
-
-    fpsHistory.push(currentFps);
-    if (fpsHistory.length > fpsHistorySize) {
-        fpsHistory.shift();
-    }
-
-    if (fpsHistory.length < fpsHistorySize) {
-        requestAnimationFrame(monitorFPS);
-        return;
-    }
-
-    const avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
-
-    if (avgFps < lowFpsThreshold) {
-        lowFpsConsecutiveFrames++;
-    } else {
-        lowFpsConsecutiveFrames = 0;
-    }
-
-    if (lowFpsConsecutiveFrames >= lowFpsTriggerCount) {
-        triggerBSOD('CRITICAL_PERFORMANCE_DROP');
-        return;
-    }
-
-    requestAnimationFrame(monitorFPS);
-}
-
 const weatherData = [
     { city: "Bucharest, RO", temp: "19°C", desc: "Clear Skies" }, { city: "London, UK", temp: "15°C", desc: "Cloudy" },
     { city: "New York, US", temp: "22°C", desc: "Sunny" }, { city: "Tokyo, JP", temp: "28°C", desc: "Humid" },
@@ -254,7 +211,7 @@ const commands = {
     clear: () => { output.innerHTML = ''; return ''; },
     echo: (args) => args ? `<p>${args.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : '<p>Nothing to echo.</p>',
     stop: (args) => { const p=args.trim().toLowerCase(); if(!p)return'<p>Usage: stop [process]</p>';if(p==='music'){const m=document.getElementById('music-player-container');if(m){m.remove();return'<p>Music player stopped.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='video'){const v=document.getElementById('video-player-container');if(v){v.remove();return'<p>Video player stopped.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='fastfetch'){const f=document.getElementById('fastfetch-container');if(f){f.remove();return'<p>System info closed.</p>'}else{return'<p class="error-message">Not running.</p>'}}return`<p class="error-message">Process '${p}' not found.</p>`; },
-    date: () => `<p>${new Date('2025-09-29T18:20:00').toLocaleString('en-US', { timeZone: 'Europe/Bucharest' })}</p>`,
+    date: () => `<p>${new Date().toLocaleString()}</p>`,
     whoami: () => `<p class="highlight-secondary">${config.username}@${config.hostname}</p>`,
     history: () => commandHistory.map((c, i) => `<p>${i + 1}. ${c}</p>`).join('') || '<p>No history.</p>',
     battery: () => { if(!config.batteryInfo.level)return`<p class="error-message">Battery API unavailable.</p>`;return`<p>Battery: ${config.batteryInfo.level}% (${config.batteryInfo.charging?'Charging':'Discharging'})</p>`;},
@@ -369,9 +326,4 @@ const commands = {
         }
     },
 };
-
-window.addEventListener('load', () => {
-    requestAnimationFrame(monitorFPS);
-});
-
 
