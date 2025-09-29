@@ -1,694 +1,222 @@
+function dragElement(elmnt, headerId) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    const header = document.getElementById(headerId) || elmnt;
+
+    if (header) { header.onmousedown = dragMouseDown; header.style.cursor = 'grab'; }
+
+    function dragMouseDown(e) {
+        e = e || window.event; e.preventDefault();
+        pos3 = e.clientX; pos4 = e.clientY;
+        document.onmouseup = closeDragElement; document.onmousemove = elementDrag;
+        if (header) header.style.cursor = 'grabbing';
+        elmnt.style.transition = 'none';
+    }
+
+    function elementDrag(e) {
+        e = e || window.event; e.preventDefault();
+        pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+        pos3 = e.clientX; pos4 = e.clientY;
+        elmnt.style.top = `${elmnt.offsetTop - pos2}px`;
+        elmnt.style.left = `${elmnt.offsetLeft - pos1}px`;
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null; document.onmousemove = null;
+        if (header) header.style.cursor = 'grab';
+        elmnt.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
+    }
+}
+
 const commands = {
     help: () => `
-        <p><span class="highlight">Available Commands:</span></p>
-        <p>help           - Shows this help message</p>
-        <p>fonts          - Change the terminal font</p>
-        <p>clear          - Clears the terminal screen</p>
-        <p>echo [text]    - Prints the specified text</p>
-        <p>run [filename] - Executes a specified file (if runnable)</p>
-        <p>date           - Shows current date and time</p>
-        <p>fastfetch      - Displays system information</p>
-        <p>whoami         - Shows current user</p>
-        <p>history        - Shows command history</p>
-        <p>battery        - Shows battery status</p>
-        <p>software       - Shows system changelog</p>
-        <p>weather        - Shows weather information</p>
-        <p>processes      - Lists running processes</p>
-        <p>calc [expr]    - Calculate mathematical expression</p>
-        <p>browser [url]  - Opens a URL in an iframe</p>
-        <p>music          - Opens the music player</p>
-        <p>video          - Opens the video player</p>
-        <p>stop [process] - Stop a process or component</p>
-        <p>fortune        - Get a random fortune message</p>
-        <p>cowsay [text]  - Display a cow saying your message</p>
-        <p>shutdown       - Shutsdown OrbitOS</p>
-        <p>reboot         - Reboots OrbitOS</p>
+        <p><span class="highlight">Command List</span></p>
+        <br/>
+        <p class="highlight">--- [ General ] ---</p>
+        <p><span class="highlight-secondary">help</span>           - Shows this help message</p>
+        <p><span class="highlight-secondary">clear</span>          - Clears the terminal screen</p>
+        <p><span class="highlight-secondary">echo [text]</span>    - Prints the specified text</p>
+        <p><span class="highlight-secondary">date</span>           - Shows current date and time</p>
+        <p><span class="highlight-secondary">history</span>        - Shows command history</p>
+        <br/>
+        <p class="highlight">--- [ System ] ---</p>
+        <p><span class="highlight-secondary">fastfetch</span>      - Displays detailed system information</p>
+        <p><span class="highlight-secondary">whoami</span>         - Shows current user</p>
+        <p><span class="highlight-secondary">setname [name]</span> - Set a custom username</p>
+        <p><span class="highlight-secondary">fonts</span>          - Change the terminal font</p>
+        <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
+        <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
+        <p><span class="highlight-secondary">stop [process]</span> - Stop a process or component</p>
+        <p><span class="highlight-secondary">software</span>       - View system software info and changelog</p>
+        <p><span class="highlight-secondary">reset</span>          - Reset all user data</p>
+        <p><span class="highlight-secondary">shutdown</span>       - Shutsdown OrbitOS</p>
+        <p><span class="highlight-secondary">reboot</span>         - Reboots OrbitOS</p>
+        <p><span class="highlight-secondary">rm -rf</span>         - ...</p>
+        <br/>
+        <p class="highlight">--- [ Tools & Media ] ---</p>
+        <p><span class="highlight-secondary">browser [url]</span>  - Opens a URL in a frame</p>
+        <p><span class="highlight-secondary">calc [expr]</span>    - Calculate mathematical expression</p>
+        <p><span class="highlight-secondary">wiki [query]</span>   - Search Wikipedia and display summary</p>
+        <p><span class="highlight-secondary">tts [text]</span>     - Text to speech</p>
+        <p><span class="highlight-secondary">translate [lang] [text]</span> - Translate text</p>
+        <p><span class="highlight-secondary">weather</span>        - Shows weather information</p>
+        <p><span class="highlight-secondary">fortune</span>        - Get a random fortune message</p>
+        <p><span class="highlight-secondary">cowsay [text]</span>  - Display a cow saying your message</p>
+        <p><span class="highlight-secondary">music</span>          - Opens the music player</p>
+        <p><span class="highlight-secondary">video</span>          - Opens the video player</p>
     `,
 
-    video: () => {
-        if (document.getElementById('video-player-container') || document.getElementById('mini-video-player-container')) {
-            return '<p class="error-message">A video player instance is already running.</p>';
-        }
-
-        const playerContainer = document.createElement('div');
-        playerContainer.id = 'video-player-container';
-        playerContainer.style.cssText = `
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 550px; max-width: 90vw;
-            background-color: #252525; border: 1px solid #444;
-            border-radius: 8px; box-shadow: 0 8px 25px rgba(0,0,0,0.7);
-            z-index: 1000; color: #ccc; font-family: 'JetBrains Mono', monospace;
-            display: flex; flex-direction: column; padding: 15px;
-        `;
-
-        playerContainer.innerHTML = `
-            <div id="video-player-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: move;">
-                <span id="video-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px; font-size: 0.9em;">No video loaded</span>
-                <button id="close-video-player" style="background: #e03131; border: none; color: white; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#c92a2a'" onmouseout="this.style.backgroundColor='#e03131'">X</button>
-            </div>
-            <div style="width: 100%; background-color: black; border-radius: 4px; overflow: hidden;">
-                <video id="video-element" style="width: 100%; height: auto; display: block; aspect-ratio: 16 / 9;"></video>
-            </div>
-            <input type="range" id="video-seek-bar" value="0" style="width: 100%; margin: 12px 0; accent-color: #2196F3;">
-            <div id="video-controls" style="display: flex; justify-content: center; gap: 10px;">
-                <button id="video-play-pause-btn" style="background: #3a3a3a; border: 1px solid #555; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#4a4a4a'" onmouseout="this.style.backgroundColor='#3a3a3a'">Play</button>
-                <button id="video-stop-btn" style="background: #3a3a3a; border: 1px solid #555; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#4a4a4a'" onmouseout="this.style.backgroundColor='#3a3a3a'">Stop</button>
-                <button id="video-hide-btn" style="background: #3a3a3a; border: 1px solid #555; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#4a4a4a'" onmouseout="this.style.backgroundColor='#3a3a3a'">Hide</button>
-            </div>
-        `;
-        document.body.appendChild(playerContainer);
-
-        const miniPlayerContainer = document.createElement('div');
-        miniPlayerContainer.id = 'mini-video-player-container';
-        miniPlayerContainer.style.cssText = `
-            position: fixed; bottom: 20px; right: 20px;
-            background-color: #2a2a2a; border: 1px solid #444;
-            border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.6);
-            z-index: 1001; color: #ccc; font-family: 'JetBrains Mono', monospace;
-            padding: 10px; display: none; align-items: center; gap: 10px; cursor: move;
-        `;
-        miniPlayerContainer.innerHTML = `
-            <span id="mini-video-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;"></span>
-            <button id="show-video-player-btn" style="background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Show</button>
-            <button id="stop-mini-video-btn" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Stop</button>
-        `;
-        document.body.appendChild(miniPlayerContainer);
-
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.mp4';
-        fileInput.style.display = 'none';
-        document.body.appendChild(fileInput);
-        fileInput.click();
-
-        const video = document.getElementById('video-element');
-        const playPauseBtn = document.getElementById('video-play-pause-btn');
-        const stopBtn = document.getElementById('video-stop-btn');
-        const hideBtn = document.getElementById('video-hide-btn');
-        const showPlayerBtn = document.getElementById('show-video-player-btn');
-        const stopMiniBtn = document.getElementById('stop-mini-video-btn');
-        const seekBar = document.getElementById('video-seek-bar');
-        const videoTitle = document.getElementById('video-title');
-        const miniVideoTitle = document.getElementById('mini-video-title');
-        const closeBtn = document.getElementById('close-video-player');
-
-        const stopVideo = () => {
-            video.pause();
-            if (video.src) URL.revokeObjectURL(video.src);
-            playerContainer.remove();
-            miniPlayerContainer.remove();
-            fileInput.remove();
-        };
-
-        fileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                video.src = URL.createObjectURL(file);
-                videoTitle.textContent = file.name;
-                miniVideoTitle.textContent = file.name;
-                video.play();
-                playPauseBtn.textContent = 'Pause';
-            } else {
-                stopVideo();
-            }
-        };
-
-        playPauseBtn.onclick = () => {
-            if (!video.src) return;
-            if (video.paused) {
-                video.play();
-                playPauseBtn.textContent = 'Pause';
-            } else {
-                video.pause();
-                playPauseBtn.textContent = 'Play';
-            }
-        };
-
-        stopBtn.onclick = () => {
-            if (!video.src) return;
-            video.pause();
-            video.currentTime = 0;
-            playPauseBtn.textContent = 'Play';
-        };
-
-        hideBtn.onclick = () => {
-            if (!video.src) return;
-            playerContainer.style.display = 'none';
-            miniPlayerContainer.style.display = 'flex';
-        };
-
-        showPlayerBtn.onclick = () => {
-            playerContainer.style.display = 'flex';
-            miniPlayerContainer.style.display = 'none';
-        };
-
-        closeBtn.onclick = stopVideo;
-        stopMiniBtn.onclick = stopVideo;
-
-        video.ontimeupdate = () => {
-            if (video.duration) seekBar.value = (video.currentTime / video.duration) * 100;
-        };
-
-        seekBar.oninput = () => {
-            if (video.duration) video.currentTime = (seekBar.value / 100) * video.duration;
-        };
-
-        video.onended = () => {
-            playPauseBtn.textContent = 'Play';
-            seekBar.value = 0;
-            video.currentTime = 0;
-        }
-
-        dragElement(playerContainer);
-        dragElement(miniPlayerContainer);
-
-        return '<p>Opening video player...</p>';
-    },
-
-    music: () => {
-        if (document.getElementById('music-player-container') || document.getElementById('mini-player-container')) {
-            return '<p class="error-message">A music player instance is already running.</p>';
-        }
-
-        const playerContainer = document.createElement('div');
-        playerContainer.id = 'music-player-container';
-        playerContainer.style.cssText = `
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); width: 350px;
-            background-color: #1e1e1e; border: 1px solid #333;
-            border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-            z-index: 1000; color: #ccc; font-family: 'JetBrains Mono', monospace;
-            display: flex; flex-direction: column; padding: 15px;
-        `;
-
-        playerContainer.innerHTML = `
-            <div id="music-player-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; cursor: move;">
-                <span id="song-title">No song loaded</span>
-                <button id="close-music-player" style="background: #e03131; border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center;">X</button>
-            </div>
-            <audio id="audio-player"></audio>
-            <input type="range" id="seek-bar" value="0" style="width: 100%; margin-bottom: 10px; accent-color: #4CAF50;">
-            <div id="music-controls" style="display: flex; justify-content: center; gap: 10px;">
-                <button id="play-pause-btn" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Play</button>
-                <button id="stop-btn" style="background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Stop</button>
-                <button id="hide-btn" style="background: #ff9800; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Hide</button>
-            </div>
-        `;
-        document.body.appendChild(playerContainer);
-
-        const miniPlayerContainer = document.createElement('div');
-        miniPlayerContainer.id = 'mini-player-container';
-        miniPlayerContainer.style.cssText = `
-            position: fixed; bottom: 20px; right: 20px;
-            background-color: #2a2a2a; border: 1px solid #444;
-            border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.6);
-            z-index: 1001; color: #ccc; font-family: 'JetBrains Mono', monospace;
-            padding: 10px; display: none; align-items: center; gap: 10px; cursor: move;
-        `;
-        miniPlayerContainer.innerHTML = `
-            <span id="mini-song-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;"></span>
-            <button id="show-player-btn" style="background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Show</button>
-            <button id="stop-mini-btn" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Stop</button>
-        `;
-        document.body.appendChild(miniPlayerContainer);
-        
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.mp3';
-        fileInput.style.display = 'none';
-        document.body.appendChild(fileInput);
-        fileInput.click();
-
-        const audio = document.getElementById('audio-player');
-        const playPauseBtn = document.getElementById('play-pause-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const hideBtn = document.getElementById('hide-btn');
-        const showPlayerBtn = document.getElementById('show-player-btn');
-        const stopMiniBtn = document.getElementById('stop-mini-btn');
-        const seekBar = document.getElementById('seek-bar');
-        const songTitle = document.getElementById('song-title');
-        const miniSongTitle = document.getElementById('mini-song-title');
-        const closeBtn = document.getElementById('close-music-player');
-
-        const stopMusic = () => {
-            audio.pause();
-            audio.currentTime = 0;
-            if (audio.src) URL.revokeObjectURL(audio.src);
-            playerContainer.remove();
-            miniPlayerContainer.remove();
-            fileInput.remove();
-        };
-
-        fileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                audio.src = URL.createObjectURL(file);
-                songTitle.textContent = file.name;
-                miniSongTitle.textContent = file.name;
-                audio.play();
-                playPauseBtn.textContent = 'Pause';
-            } else {
-                stopMusic();
-            }
-        };
-
-        playPauseBtn.onclick = () => {
-            if (!audio.src) return;
-            if (audio.paused) {
-                audio.play();
-                playPauseBtn.textContent = 'Pause';
-            } else {
-                audio.pause();
-                playPauseBtn.textContent = 'Play';
-            }
-        };
-        
-        stopBtn.onclick = () => {
-            if (!audio.src) return;
-             audio.pause();
-             audio.currentTime = 0;
-             playPauseBtn.textContent = 'Play';
-        };
-
-        hideBtn.onclick = () => {
-            if (!audio.src) return;
-            playerContainer.style.display = 'none';
-            miniPlayerContainer.style.display = 'flex';
-        };
-
-        showPlayerBtn.onclick = () => {
-            playerContainer.style.display = 'flex';
-            miniPlayerContainer.style.display = 'none';
-        };
-
-        closeBtn.onclick = stopMusic;
-        stopMiniBtn.onclick = stopMusic;
-
-        audio.ontimeupdate = () => {
-            if (audio.duration) seekBar.value = (audio.currentTime / audio.duration) * 100;
-        };
-        
-        seekBar.oninput = () => {
-             if (audio.duration) audio.currentTime = (seekBar.value / 100) * audio.duration;
-        };
-        
-        audio.onended = () => {
-            playPauseBtn.textContent = 'Play';
-            seekBar.value = 0;
-            audio.currentTime = 0;
-        }
-
-        dragElement(playerContainer);
-        dragElement(miniPlayerContainer);
-
-        return '<p>Opening music player...</p>';
-    },
-
-    fonts: (args) => {
-        const fontNumber = parseInt(args.trim());
-        if (!args || isNaN(fontNumber)) {
-            return `
-                <p>Available fonts:</p>
-                <p>1. JetBrains Mono (Default)</p>
-                <p>2. Fira Code</p>
-                <p>3. Source Code Pro</p>
-                <p>4. IBM Plex Mono</p>
-                <p>5. Anonymous Pro</p>
-                <p>Usage: fonts [number]</p>
-            `;
-        }
-        if (applyFont(fontNumber)) {
-            return `<p>Font updated successfully.</p>`;
-        } else {
-            return `<p class="error-message">Error: Invalid font number. Please choose a number between 1 and 5.</p>`;
-        }
-    },
-
-    clear: () => {
-        output.innerHTML = '';
-        return '';
-    },
-
-    echo: (args) => args ? `<p>${args}</p>` : '<p>Nothing to echo.</p>',
-
-    run: (args) => {
-        return `<p class="error-message">Error: No runnable files found in the current system.</p>`;
-    },
-
-    stop: (args) => {
-        const processName = args.trim().toLowerCase();
-
-        if (!processName) {
-            return '<p>Usage: stop [process]</p><p>Available: terminal, system, browser, music, video, process</p>';
-        }
-
-        if (processName === 'terminal') {
-            toggleTerminal(false);
-            return '<p class="highlight">Terminal interface stopped. Refresh page to restore.</p>';
-        } else if (processName === 'system') {
-            setTimeout(systemHalt, 500);
-            return '<p class="highlight">WARNING: Critical system process stopping...</p>';
-        } else if (processName === 'browser') {
-            if (stoppedProcesses.includes('browser')) {
-                return '<p class="error-message">Browser process already stopped.</p>';
-            }
-            stoppedProcesses.push('browser');
-            return '<p>Browser process stopped. "browser" command is now disabled.</p>';
-        } else if (processName === 'music') {
-             const player = document.getElementById('music-player-container');
-             const miniPlayer = document.getElementById('mini-player-container');
-             if (player || miniPlayer) {
-                 const closeBtn = document.getElementById('close-music-player');
-                 if(closeBtn) closeBtn.click();
-                 return '<p>Music player stopped.</p>';
-             } else {
-                 return '<p class="error-message">Music player is not running.</p>';
-             }
-        } else if (processName === 'video') {
-             const player = document.getElementById('video-player-container');
-             const miniPlayer = document.getElementById('mini-video-player-container');
-             if (player || miniPlayer) {
-                 const closeBtn = document.getElementById('close-video-player');
-                 if(closeBtn) closeBtn.click();
-                 return '<p>Video player stopped.</p>';
-             } else {
-                 return '<p class="error-message">Video player is not running.</p>';
-             }
-        } else if (processName === 'process') {
-            const pid = Math.floor(Math.random() * 1000) + 1;
-            return `<p>Process with PID ${pid} stopped successfully.</p>`;
-        } else {
-            return `<p class="error-message">Error: Process '${processName}' not found or cannot be stopped.</p>`;
-        }
-    },
-
-    date: () => `<p>${new Date().toLocaleString()}</p>`,
-
     fastfetch: () => {
-        const {
-            totalDisk,
-            freeDisk,
-            totalRAM,
-            freeRAM
-        } = config.dynamicStorage;
-        return `
-            <pre class="highlight" style="font-family: 'JetBrains Mono', monospace;">
-              /\\
-             /  \\
-            /    \\
-           /      \\
-          /   ◢◤   \\
-         /    ||    \\
-        /     ||     \\
-       /      ||      \\
-      /________________\\
-            </pre>
-            <p><span class="highlight">${config.systemInfo.os}</span>@${config.username}</p>
-            <p>-----------------</p>
-            <p>OS: ${config.systemInfo.os} ${config.systemInfo.version}</p>
-            <p>Kernel: ${config.systemInfo.kernel}</p>
-            <p>Architecture: ${config.systemInfo.architecture}</p>
-            <p>Total Disk: ${totalDisk.toFixed(2)} GB (${freeDisk.toFixed(2)} GB free)</p>
-            <p>Total RAM: ${totalRAM.toFixed(2)} GB (${freeRAM.toFixed(2)} GB free)</p>
-            <p>Uptime: ${getUptime()}</p>
-        `;
-    },
-
-    whoami: () => `<p class="highlight">${config.username}@${config.hostname}</p>`,
-
-    history: () => commandHistory.map((cmd, i) => `<p>${i + 1}. ${cmd}</p>`).join('') || '<p>No command history yet.</p>',
-
-    battery: () => {
-        const percentage = config.batteryInfo.percentage;
-        const isCharging = config.batteryInfo.charging;
-        const timeRemaining = generateBatteryTimeRemaining(percentage, isCharging);
-
-        return `
-            <p>Battery Status:</p>
-            <p>Charge: ${percentage}%</p>
-            <p>Status: ${isCharging ? 'Charging' : 'Discharging'}</p>
-            <p>Time ${isCharging ? 'to full' : 'remaining'}: ${timeRemaining}</p>
-        `;
-    },
-
-    software: () => {
-        const checkMessage = '<p style="color: var(--terminal-success);">Checking for updates...</p>';
-
-        setTimeout(() => {
-            const updateMessage = document.createElement('div');
-            updateMessage.innerHTML = `
-                <p style="color: var(--terminal-error);">You are using the latest version!</p>
-                <p>Last successful update: September 28, 2025</p>
-                <p>Version 3.5.4</p>
-                <p></p>
-                <ul>
-                    </li>• Added a new rm -rf command along with a basic BIOS interface, giving users low-level access to system operations. Right now, the BIOS is limited to executing rm -rf, but this is just the beginning. Starting with version 4.0, the BIOS will expand its capabilities, allowing full system control such as restarting the system, managing core processes, and performing other advanced administrative functions, paving the way for a more powerful and flexible user experience.
-</li>
-
-          </ul>
-            `;
-            output.appendChild(updateMessage);
-            scrollToBottom();
-        }, 1500);
-
-        return checkMessage;
-    },
-
-    weather: () => {
-        const weather = generateRandomWeather();
-        const {
-            location,
-            temperature,
-            condition,
-            humidity,
-            windSpeed,
-            precipitation,
-            precipChance
-        } = weather;
-
-        return `
-            <p class="highlight">Current Weather:</p>
-            <p>Location: ${location.city}, ${location.country}</p>
-            <p>Temperature: ${temperature}°C</p>
-            <p>Condition: ${condition}</p>
-            <p>Humidity: ${humidity}%</p>
-            <p>Wind Speed: ${windSpeed} km/h</p>
-            <p>Precipitation: ${precipitation} (${precipChance}% chance)</p>
-        `;
-    },
-
-    processes: () => {
-        let runningProcesses = `
-            <p class="highlight">Running Processes:</p>
-            <p>1. system_core    (PID: 1)</p>
-            <p>2. terminal       (PID: 245)</p>
-            <p>3. user_session   (PID: 892)</p>
-        `;
-        let pidCounter = 4;
-        if (document.getElementById('music-player-container')) {
-            runningProcesses += `<p>${pidCounter++}. music_player   (PID: ${Math.floor(Math.random() * 500) + 1000})</p>`;
-        }
-        if (document.getElementById('video-player-container')) {
-             runningProcesses += `<p>${pidCounter++}. video_player   (PID: ${Math.floor(Math.random() * 500) + 1500})</p>`;
-        }
-        if (stoppedProcesses.length > 0) {
-            runningProcesses += '<p class="highlight">Stopped Processes:</p>' + stoppedProcesses.map(proc => `<p>- ${proc}</p>`).join('');
-        }
-        return runningProcesses;
-    },
-
-    shutdown: () => {
-        const response = '<p>Shutting down...</p>';
-        isSystemBricked = true;
-        inputField.disabled = true;
-        prompt.style.display = 'none';
-        setTimeout(() => {
-            document.body.innerHTML = '<p style="color: #ccc; font-family: JetBrains Mono, monospace; text-align: center; margin-top: 50px;">System halted.</p>';
-        }, 1000);
-        return response;
-    },
-
-    reboot: () => {
-        output.innerHTML = '<p>Rebooting system...</p>';
-        inputField.disabled = true;
-        prompt.style.display = 'none';
-
-
-        (async () => {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            if (typeof simulateBootSequence === 'function') {
-                await simulateBootSequence();
-            }
-            if (typeof finalizeBootSequence === 'function') {
-                finalizeBootSequence();
-            }
-        })();
-
-        return '';
-    },
-
-    calc: (args) => {
-        try {
-            if (!args) return "<p>Usage: calc [expression]</p>";
-            const safeArgs = args.replace(/[^-()\d/*+.]/g, '');
-            if (!safeArgs) return `<p class="error-message">Error: Invalid characters in expression</p>`;
-            const result = new Function(`return ${safeArgs}`)();
-            return `<p>Result: ${result}</p>`;
-        } catch (error) {
-            console.error("Calc Error:", error);
-            return `<p class="error-message">Error: Invalid expression or calculation failed</p>`;
-        }
-    },
-
-    browser: (args) => {
-        if (stoppedProcesses.includes('browser')) {
-            return '<p class="error-message">Browser process is stopped. Use "reboot" to restore functionality.</p>';
-        }
-
-        const url = args.trim();
-        if (!url) {
-            return `<p>Usage: browser [url]</p><p>Example: browser https://example.com</p>`;
-        }
-
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            return `<p class="error-message">Invalid URL. Please include http:// or https://</p>`;
-        }
-
-        return `
-            <p class="highlight" style="color: var(--terminal-error);">
-            ⚠️ OrbitOS uses a iframe to load sites, however not all sites can load.
-            </p>
-            <p>Loading ${url}...</p>
-            <div style="width:100%; height:600px; border: 1px solid #444; margin-top: 10px; background-color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); overflow: hidden;">
-                <iframe src="${url}" style="width:100%; height:100%; border:none;" sandbox="allow-scripts allow-same-origin"></iframe>
+        if (document.getElementById('fastfetch-container')) { document.getElementById('fastfetch-container').remove(); }
+        const ffContainer = document.createElement('div');
+        ffContainer.id = 'fastfetch-container';
+        ffContainer.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 650px; max-width: 90vw;
+            background: var(--surface); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--outline); border-radius: 12px;
+            box-shadow: 0 10px 50px var(--glow);
+            z-index: 1000; color: var(--on-surface); font-family: 'Inter', sans-serif;
+            display: flex; flex-direction: column; animation: fadeIn 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;`;
+        const lastUpdate = new Date(new Date().getFullYear(), new Date().getMonth(), 28).toLocaleDateString();
+        ffContainer.innerHTML = `
+            <div id="fastfetch-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline);">
+                <span style="font-weight: 500; color: var(--on-surface);">System Information</span>
+                <button id="close-fastfetch" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button>
             </div>
-        `;
-    },
-
-    fortune: () => {
-        const fortunes = [
-            "You will find a hidden treasure where you least expect it.",
-            "A beautiful, smart, and loving person will be coming into your life.",
-            "Your hard work is about to pay off. Remember, Rome wasn't built in a day.",
-            "A dubious friend may be an enemy in camouflage.",
-            "A faithful friend is a strong defense.",
-            "A fresh start will put you on your way.",
-            "A person of words and not deeds is like a garden full of weeds.",
-            "All the effort you are making will ultimately pay off."
-        ];
-
-        const randomIndex = Math.floor(Math.random() * fortunes.length);
-        return `<p class="highlight">Fortune says:</p><p>${fortunes[randomIndex]}</p>`;
-    },
-
-    cowsay: (args) => {
-        const message = args.trim() || "Moo!";
-
-        const bubbleWidth = message.length + 2;
-        const topLine = ` ${'_'.repeat(bubbleWidth)} `;
-        const bottomLine = ` ${'-'.repeat(bubbleWidth)} `;
-        const textLine = `< ${message} >`;
-
-        const cow = `
-        \\   ^__^
-         \\  (oo)\\_______
-            (__)\\       )\\/\\
-                ||----w |
-                ||     ||
-    `;
-
-        return `<pre style="font-family: 'JetBrains Mono', monospace;">${topLine}
-${textLine}
-${bottomLine}${cow}</pre>`;
-    },
-
-    rm: (args) => {
-        const validFlags = ['-rf', '-rf /', '-rf --no-preserve-root'];
-        if (!validFlags.includes(args.trim())) {
-            return `<p>rm: missing operand</p><p>Try 'rm --help' for more information.</p>`;
-        }
-
-        inputField.disabled = true;
-        prompt.style.display = 'none';
-
-        const generateRandomPath = () => {
-            const dirs = ['/bin', '/etc', '/home', '/usr', '/var', '/lib', '/root', '/tmp', '/dev', '/proc', '/sbin', '/opt'];
-            const subdirs = ['local', 'share', 'log', 'mail', 'spool', 'games', 'X11R6', 'include', 'config', 'cache', 'www'];
-            const files = ['kernel.log', 'config.sys', 'profile', 'bashrc', 'shadow', 'passwd', 'fstab', 'hosts', 'null', 'random', 'zero', 'vmlinuz', 'initrd.img'];
-
-            let path = dirs[Math.floor(Math.random() * dirs.length)];
-            const depth = Math.floor(Math.random() * 4);
-
-            for (let i = 0; i < depth; i++) {
-                path += '/' + subdirs[Math.floor(Math.random() * subdirs.length)];
-            }
-
-            path += '/' + files[Math.floor(Math.random() * files.length)] + Math.random().toString(36).substring(2, 8);
-            return path;
-        };
-
-        const deletionInterval = setInterval(() => {
-            const errorElement = document.createElement('p');
-            errorElement.className = 'error-message';
-            errorElement.style.margin = '0';
-            errorElement.style.lineHeight = '1.2';
-            errorElement.textContent = `rm: cannot remove '${generateRandomPath()}': No such file or directory`;
-            output.appendChild(errorElement);
-            scrollToBottom();
-        }, 40);
-
-        setTimeout(() => {
-            clearInterval(deletionInterval);
-            document.body.innerHTML = `<div style="background-color: #0000AA; color: #FFFFFF; width: 100%; height: 100vh; font-family: 'Perfect DOS VGA', monospace; padding: 2em; box-sizing: border-box;">
-                <p style="text-align: center; background-color: #CCCCCC; color: #0000AA; display: inline-block; padding: 0 0.5em;"> BIOS </p>
-                <p>A fatal exception 0E has occurred at 0137:BFF73456. /sys could not be mounted.</p>
-                <br>
-                <p>* Press any key to try again</p>
-                <p>* Press CTRL+ALT+DEL again to restart your computer. You will lose any unsaved information in all applications.</p>
-                <br>
-                <p style="text-align: center;">Press any key to continue _</p>
+            <div style="display: flex; padding: 20px; gap: 20px;">
+                <pre style="color: var(--accent-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-top: -10px;">
+      .o.
+     .o o.
+    .o   o.
+   .o     o.
+  .o       o.
+ .o         o.
+.o           o.
+ o...     ...o
+  o.....o...
+    o.....o
+      o.o
+       o
+                </pre>
+                <div style="font-size: 0.9rem; line-height: 1.8; flex-grow: 1;">
+                    <p><span class="highlight-secondary">${config.username}@${config.hostname}</span></p>
+                    <p>---------------------------------</p>
+                    <p><span style="width: 120px; display: inline-block;">OS</span>: <span class="highlight">${config.systemInfo.os} ${config.systemInfo.version}</span></p>
+                    <p><span style="width: 120px; display: inline-block;">Build Number</span>: ${config.systemInfo.build}</p>
+                    <p><span style="width: 120px; display: inline-block;">Kernel</span>: ${config.systemInfo.kernel}</p>
+                    <p><span style="width: 120px; display: inline-block;">Last Update</span>: ${lastUpdate}</p>
+                    <p><span style="width: 120px; display: inline-block;">Uptime</span>: ${getUptime()}</p>
+                    <p><span style="width: 120px; display: inline-block;">CPU</span>: OrbitCore i9-13900K</p>
+                    <p><span style="width: 120px; display: inline-block;">GPU</span>: Nebula RTX 4090</p>
+                </div>
             </div>`;
-        }, 8000);
+        document.body.appendChild(ffContainer);
+        document.getElementById('close-fastfetch').onclick = () => ffContainer.remove();
+        dragElement(ffContainer, 'fastfetch-header');
+        return '<p>Displaying system information...</p>';
+    },
+    
+    wiki: async (args) => {
+        const query = args.trim();
+        if (!query) return '<p>Usage: wiki [search query]</p>';
+        const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                return `<p class="error-message">Could not find a Wikipedia article for "${query}".</p>`;
+            }
+            const data = await response.json();
+            const summary = data.extract_html || data.extract;
+            const pageUrl = data.content_urls.desktop.page;
+            
+            return `
+                <div>
+                    <h3 class="highlight" style="margin-bottom: 0.5rem;">${data.title}</h3>
+                    <p>${summary}</p>
+                    <a href="${pageUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-secondary);">Read full article...</a>
+                </div>
+            `;
+        } catch (error) {
+            console.error("Wikipedia API error:", error);
+            return '<p class="error-message">Failed to fetch data from Wikipedia. Check your connection.</p>';
+        }
+    },
 
-        return '';
-    }
+    video: () => {
+        if (document.getElementById('video-player-container')) return '<p class="error-message">Video player is already running.</p>';
+        const playerContainer = document.createElement('div'); playerContainer.id = 'video-player-container';
+        playerContainer.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; max-width: 90vw; background: var(--surface); backdrop-filter: blur(15px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; animation: fadeIn 0.3s ease;`;
+        playerContainer.innerHTML = `<div id="video-player-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline);"><span id="video-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px; font-size: 0.9em; font-weight: 500; color: var(--on-surface);">No video loaded</span><button id="close-video-player" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button></div><div style="width: 100%; background-color: black; border-radius: 0 0 11px 11px; overflow: hidden;"><video id="video-element" style="width: 100%; display: block;"></video></div><div style="padding: 12px 16px;"><input type="range" id="video-seek-bar" value="0" style="width: 100%; margin: 8px 0; accent-color: var(--accent-primary);"><div id="video-controls" style="display: flex; justify-content: center; align-items:center; gap: 15px;"><button id="video-play-pause-btn" style="background: transparent; border: none; color: white; cursor: pointer; opacity: 0.8; transition: opacity 0.2s ease, transform 0.2s ease;"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div></div>`;
+        document.body.appendChild(playerContainer);
+        const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.mp4'; fileInput.style.display = 'none'; document.body.appendChild(fileInput); fileInput.click();
+        const video = document.getElementById('video-element'), playBtn = document.getElementById('video-play-pause-btn'), seek = document.getElementById('video-seek-bar'), title = document.getElementById('video-title'), close = document.getElementById('close-video-player');
+        const playIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>', pauseIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+        playBtn.onmouseover = () => { playBtn.style.opacity = '1'; playBtn.style.transform = 'scale(1.1)'; }; playBtn.onmouseout = () => { playBtn.style.opacity = '0.8'; playBtn.style.transform = 'scale(1)'; };
+        const stop = () => { video.pause(); if (video.src) URL.revokeObjectURL(video.src); playerContainer.remove(); fileInput.remove(); };
+        fileInput.onchange = (e) => { const f = e.target.files[0]; if (f) { video.src = URL.createObjectURL(f); title.textContent = f.name; video.play(); playBtn.innerHTML = pauseIcon; } else { stop(); } };
+        playBtn.onclick = () => { if (!video.src) return; if (video.paused) { video.play(); playBtn.innerHTML = pauseIcon; } else { video.pause(); playBtn.innerHTML = playIcon; } };
+        close.onclick = stop; video.ontimeupdate = () => { if (video.duration) seek.value = (video.currentTime / video.duration) * 100; }; seek.oninput = () => { if (video.duration) video.currentTime = (seek.value / 100) * video.duration; }; video.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; video.currentTime = 0; }
+        dragElement(playerContainer, 'video-player-header'); return '<p>Opening video player...</p>';
+    },
+    music: () => {
+        if (document.getElementById('music-player-container')) return '<p class="error-message">Music player is already running.</p>';
+        const playerContainer = document.createElement('div'); playerContainer.id = 'music-player-container';
+        playerContainer.style.cssText = `position: fixed; top: 60%; left: 50%; transform: translate(-50%, -50%); width: 350px; background: var(--surface); backdrop-filter: blur(15px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; padding: 15px; animation: fadeIn 0.3s ease;`;
+        playerContainer.innerHTML = `<div id="music-player-header" style="display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 500; color: var(--on-surface);">Music Player</span><button id="close-music-player" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button></div><div style="text-align: center; padding: 20px 0;"><span id="song-title" style="display: block; margin-bottom: 10px; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No song loaded</span><audio id="audio-player"></audio><input type="range" id="seek-bar" value="0" style="width: 100%; margin-bottom: 15px; accent-color: var(--accent-secondary);"></div><div id="music-controls" style="display: flex; justify-content: center; align-items: center; gap: 20px;"><button id="play-pause-btn" style="background: var(--accent-secondary); color: var(--background); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease;"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>`;
+        document.body.appendChild(playerContainer);
+        const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.mp3'; fileInput.style.display = 'none'; document.body.appendChild(fileInput); fileInput.click();
+        const audio = document.getElementById('audio-player'), playBtn = document.getElementById('play-pause-btn'), seek = document.getElementById('seek-bar'), title = document.getElementById('song-title'), close = document.getElementById('close-music-player');
+        playBtn.onmouseover = () => playBtn.style.transform = 'scale(1.1)'; playBtn.onmouseout = () => playBtn.style.transform = 'scale(1)';
+        const playIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>', pauseIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+        const stop = () => { audio.pause(); if (audio.src) URL.revokeObjectURL(audio.src); playerContainer.remove(); fileInput.remove(); };
+        fileInput.onchange = (e) => { const f = e.target.files[0]; if (f) { audio.src = URL.createObjectURL(f); title.textContent = f.name; audio.play(); playBtn.innerHTML = pauseIcon; } else { stop(); } };
+        playBtn.onclick = () => { if (!audio.src) return; if (audio.paused) { audio.play(); playBtn.innerHTML = pauseIcon; } else { audio.pause(); playBtn.innerHTML = playIcon; } };
+        close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
+        dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
+    },
+    software: () => `
+        <div style="line-height: 1.8;">
+            <p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p>
+            <p>Last updated: ${new Date(new Date().setDate(new Date().getDate()-1)).toLocaleDateString()}</p>
+            <br>
+            <p><strong>Orbit OS 4.0 Alpha 1 – the first step into the next generation of Orbit, bringing a redesigned interface, brand new features, expanded commands, improved performance, stronger security, and an overall smoother experience, marking the beginning of the biggest update the project has ever had</strong></p>
+            <p style="color: var(--accent-secondary);">The entire OS has been redesigned with a clean, professional, and modern interface inspired by native development environments. It's easier on the eyes and improves readability.</p>
+            <br>
+            <p><strong>Smarter Commands: In-Terminal Wikipedia</strong></p>
+            <p style="color: var(--accent-secondary);">The 'wiki' command now fetches and displays article summaries directly inside the terminal, instead of opening a new tab. Get information faster without leaving the OS.</p>
+            <br>
+            <p><strong>Enhanced System Information: Graphical 'fastfetch'</strong></p>
+            <p style="color: var(--accent-secondary);">Running 'fastfetch' now opens a dedicated, movable window with detailed system specs, including build number, kernel version, and simulated hardware info.</p>
+            <br>
+            <p><strong>Full Feature Suite</strong></p>
+            <p style="color: var(--accent-secondary);">The complete set of tools including 'browser', 'tts', 'translate', and more are fully integrated. Media players for music and video are draggable and feature a sleek new design.</p>
+            <br>
+            <p><strong>Data Persistence and Customization</strong></p>
+            <p style="color: var(--accent-secondary);">Your custom username, chosen font, and login history are now saved between sessions using cookies. Use 'setname', 'fonts', and 'reset' to manage your profile.</p>
+        </div>
+    `,
+    browser: (args) => { const u=args.trim(); if(!u)return`<p>Usage: browser [url]</p>`; if(!u.startsWith('http'))return`<p class="error-message">Invalid URL.</p>`; return `<p class="error-message">⚠️ Note: Not all websites support being loaded in a frame.</p><p>Loading ${u}...</p><div style="width:100%; height:600px; border: 1px solid var(--outline); margin-top: 10px; background-color: white; border-radius: 8px; overflow: hidden;"><iframe src="${u}" style="width:100%; height:100%; border:none;" sandbox="allow-scripts allow-same-origin"></iframe></div>`; },
+    rm: (args) => { if (args.trim() !== '-rf') return `<p>rm: missing operand</p>`; inputField.disabled=true; prompt.style.display='none'; const i=setInterval(()=>{const p=document.createElement('p');p.className='error-message';p.style.margin='0';p.style.lineHeight='1.2';p.textContent=`rm: /sys/lib/${Math.random().toString(36).substring(2)}: Permission denied`;output.appendChild(p);scrollToBottom();},40); setTimeout(()=>{clearInterval(i);document.body.innerHTML=`<div style="background-color:#0000AA;color:#FFF;width:100%;height:100vh;font-family:monospace;padding:2em;"><p>Fatal exception 0E at 0137:BFF73456</p></div>`;},8000); return ''; },
+    fonts: (args) => { const n=parseInt(args.trim()),f={1:"JetBrains Mono",2:"Fira Code",3:"Source Code Pro",4:"IBM Plex Mono",5:"Anonymous Pro",6:"Roboto Mono",7:"Space Mono",8:"Ubuntu Mono",9:"VT323",10:"Nanum Gothic Coding",11:"Cutive Mono",12:"Share Tech Mono",13:"Major Mono Display",14:"Nova Mono",15:"Syne Mono"};if(!args||isNaN(n)){let l='<p>Available fonts:</p>';for(const[i,m]of Object.entries(f)){l+=`<p>${i}. ${m}${i==1?' (Default)':''}</p>`}l+='<p>Usage: fonts [number]</p>';return l}if(applyFont(n)){setCookie('font',n,365);return`<p>Font set to ${f[n]}.</p>`}else{return'<p class="error-message">Invalid font number.</p>'}},
+    clear: () => { output.innerHTML = ''; return ''; },
+    echo: (args) => args ? `<p>${args.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : '<p>Nothing to echo.</p>',
+    stop: (args) => { const p=args.trim().toLowerCase(); if(!p)return'<p>Usage: stop [process]</p>';if(p==='music'){const m=document.getElementById('music-player-container');if(m){m.remove();return'<p>Music player stopped.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='video'){const v=document.getElementById('video-player-container');if(v){v.remove();return'<p>Video player stopped.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='fastfetch'){const f=document.getElementById('fastfetch-container');if(f){f.remove();return'<p>System info closed.</p>'}else{return'<p class="error-message">Not running.</p>'}}return`<p class="error-message">Process '${p}' not found.</p>`; },
+    date: () => `<p>${new Date().toLocaleString()}</p>`,
+    whoami: () => `<p class="highlight-secondary">${config.username}@${config.hostname}</p>`,
+    history: () => commandHistory.map((c, i) => `<p>${i + 1}. ${c}</p>`).join('') || '<p>No history.</p>',
+    battery: () => { if(!config.batteryInfo.level)return`<p class="error-message">Battery API unavailable.</p>`;return`<p>Battery: ${config.batteryInfo.level}% (${config.batteryInfo.charging?'Charging':'Discharging'})</p>`;},
+    processes: () => { let r=`<p class="highlight">Processes:</p><p>system_core</p><p>terminal</p>`,c=4;if(document.getElementById('music-player-container'))r+=`<p>music_player</p>`;if(document.getElementById('video-player-container'))r+=`<p>video_player</p>`;if(document.getElementById('fastfetch-container'))r+=`<p>sys_info</p>`;return r;},
+    shutdown: () => { isSystemBricked=true;inputField.disabled=true;prompt.style.display='none';setTimeout(()=>{document.body.innerHTML='<p style="font-family:var(--font-mono);text-align:center;padding:2rem;">System halted.</p>'},1000);return'<p>Shutting down...</p>';},
+    reboot: () => { output.innerHTML='<p>Rebooting...</p>';inputField.disabled=true;prompt.style.display='none';setTimeout(()=>window.location.reload(),1500);return'';},
+    calc: (args) => { try{if(!args)return"<p>Usage: calc [expression]</p>";const s=args.replace(/[^-()\d/*+.]/g,'');if(!s)return`<p class="error-message">Invalid characters.</p>`;return`<p>Result: ${new Function(`return ${s}`)()}</p>`}catch(e){return`<p class="error-message">Invalid expression.</p>`}},
+    fortune: () => `<p class="highlight">Fortune:</p><p>${["A faithful friend is a strong defense.","A fresh start will put you on your way.","Your hard work is about to pay off."][Math.floor(Math.random()*3)]}</p>`,
+    cowsay: (args) => { const m=args.trim()||"Moo!";return`<pre style="font-family:var(--font-mono);">${` _${'_'.repeat(m.length)}_ \n< ${m} >\n -${'-'.repeat(m.length)}- \n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||`}</pre>`;},
+    tts: (args) => { if(!args.trim())return'<p>Usage: tts [text]</p>';if('speechSynthesis' in window){speechSynthesis.speak(new SpeechSynthesisUtterance(args));return'<p>Speaking...</p>'}else{return'<p class="error-message">TTS not supported.</p>'}},
+    translate: (args) => { const p=args.split(' ');if(p.length<2)return'<p>Usage: translate [lang] [text]</p>';window.open(`https://translate.google.com/?sl=auto&tl=${p[0]}&text=${encodeURIComponent(p.slice(1).join(' '))}`,'_blank');return`<p>Opening Google Translate...</p>`;},
+    reset: (args) => { if(args.trim()==='confirm'){deleteCookie('username');deleteCookie('font');deleteCookie('lastLogin');output.innerHTML='<p>Data reset. Rebooting...</p>';setTimeout(()=>window.location.reload(),1500);return''}return`<p class="error-message">WARNING: This will erase all saved settings. Type <span class="highlight">reset confirm</span> to proceed.</p>`;},
+    setname: (args) => { const n=args.trim();if(!n)return'<p>Usage: setname [username]</p>';if(n.length>15)return'<p class="error-message">Username too long.</p>';config.username=n;setCookie('username',n,365);prompt.textContent=`${config.username}@${config.hostname}:~$ `;return`<p>Username changed to <span class="highlight">${n}</span>.</p>`;},
+    weather: () => `<p class="highlight">Weather:</p><p>Bucharest, RO: 19°C, Clear Skies</p>`,
 };
-
-function dragElement(elmnt) {
-  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-  const headerId = elmnt.id.includes('mini') ? elmnt.id : `${elmnt.id}-header`;
-  const header = document.getElementById(headerId) || elmnt;
-  
-  if (header) {
-    header.onmousedown = dragMouseDown;
-  }
-
-  function dragMouseDown(e) {
-    e = e || window.event;
-    e.preventDefault();
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    document.onmousemove = elementDrag;
-  }
-
-  function elementDrag(e) {
-    e = e || window.event;
-    e.preventDefault();
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    elmnt.style.top = `${elmnt.offsetTop - pos2}px`;
-    elmnt.style.left = `${elmnt.offsetLeft - pos1}px`;
-  }
-
-  function closeDragElement() {
-    document.onmouseup = null;
-    document.onmousemove = null;
-  }
-}
 
 
