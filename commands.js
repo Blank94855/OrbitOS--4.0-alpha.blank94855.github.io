@@ -204,7 +204,7 @@ const commands = {
         fileInput.onchange = (e) => { const f = e.target.files[0]; if (f) { audio.src = URL.createObjectURL(f); title.textContent = f.name; audio.play(); playBtn.innerHTML = pauseIcon; } else { stop(); } };
         playBtn.onclick = () => { if (!audio.src) return; if (audio.paused) { audio.play(); playBtn.innerHTML = pauseIcon; } else { audio.pause(); playBtn.innerHTML = playIcon; } };
         hideBtn.onclick = () => { const isHidden = playerBody.style.display === 'none'; playerBody.style.display = isHidden ? 'block' : 'none'; hideBtn.innerHTML = isHidden ? '–' : '+'; };
-        close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
+        close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * video.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
         dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
     },
     software: () => `
@@ -273,26 +273,19 @@ const commands = {
         }
         const targetLang = parts[0];
         const textToTranslate = parts.slice(1).join(' ');
-        try {
-            const response = await fetch("https://translate.argosopentech.com/translate", {
-                method: "POST",
-                body: JSON.stringify({
-                    q: textToTranslate,
-                    source: "auto",
-                    target: targetLang,
-                }),
-                headers: { "Content-Type": "application/json" }
-            });
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`;
 
+        try {
+            const response = await fetch(url);
             if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                if (errorData && errorData.error) {
-                     return `<p class="error-message">Translation failed: ${errorData.error}</p>`;
-                }
                 return '<p class="error-message">Translation service returned an error.</p>';
             }
             const data = await response.json();
-            return `<p>${data.translatedText}</p>`;
+            if (data && data[0] && data[0][0] && data[0][0][0]) {
+                return `<p>${data[0][0][0]}</p>`;
+            } else {
+                return '<p class="error-message">Could not parse translation response.</p>';
+            }
         } catch (error) {
             console.error("Translation API error:", error);
             return '<p class="error-message">Failed to connect to the translation service. Check your connection.</p>';
