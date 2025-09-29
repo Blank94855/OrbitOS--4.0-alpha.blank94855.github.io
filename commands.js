@@ -52,17 +52,15 @@ function triggerBSOD(errorCode) {
 }
 
 
-// --- FPS Monitoring and BSOD Trigger ---
-// This section continuously monitors performance and triggers a BSOD if the frame rate drops too low.
+
 let lastFrameTime = performance.now();
 const fpsHistory = [];
-const fpsHistorySize = 60; // Store the last 60 FPS readings for a stable average.
+const fpsHistorySize = 60;
 let lowFpsConsecutiveFrames = 0;
-const lowFpsThreshold = 15; // The FPS limit that is considered critical.
-const lowFpsTriggerCount = 120; // Trigger BSOD if FPS is below threshold for ~2 seconds.
+const lowFpsThreshold = 15; 
+const lowFpsTriggerCount = 120;
 
 function monitorFPS() {
-    // Stop if the OS is not active (e.g., BSOD screen is shown) to prevent re-triggering.
     if (document.getElementById('bsod-screen').style.display === 'flex') {
         return;
     }
@@ -72,10 +70,10 @@ function monitorFPS() {
     lastFrameTime = now;
     const currentFps = 1000 / delta;
 
-    // Add the current FPS to our history array.
+   
     fpsHistory.push(currentFps);
     if (fpsHistory.length > fpsHistorySize) {
-        fpsHistory.shift(); // Keep the array at a fixed size.
+        fpsHistory.shift();
     }
 
     // Only start checking after we have a decent sample size for a reliable average.
@@ -86,21 +84,21 @@ function monitorFPS() {
 
     const avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
 
-    // If the average FPS is below our threshold, increment the counter.
+    
     if (avgFps < lowFpsThreshold) {
         lowFpsConsecutiveFrames++;
     } else {
-        // Otherwise, reset the counter as performance has recovered.
+        .
         lowFpsConsecutiveFrames = 0;
     }
 
-    // If the FPS has been consistently low, trigger the BSOD.
+    
     if (lowFpsConsecutiveFrames >= lowFpsTriggerCount) {
         triggerBSOD('CRITICAL_PERFORMANCE_DROP');
-        return; // Stop monitoring after triggering.
-    }
+        return; 
+}
 
-    // Continue the loop.
+    
     requestAnimationFrame(monitorFPS);
 }
 
