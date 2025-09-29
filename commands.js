@@ -76,7 +76,7 @@ function monitorFPS() {
         fpsHistory.shift();
     }
 
-    // Only start checking after we have a decent sample size for a reliable average.
+    
     if (fpsHistory.length < fpsHistorySize) {
         requestAnimationFrame(monitorFPS);
         return;
