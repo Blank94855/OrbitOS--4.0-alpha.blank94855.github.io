@@ -32,7 +32,7 @@ function loadSettings() {
     const savedUser = getCookie('username');
     if (savedUser) config.username = savedUser;
     
-    // FIX: Added the missing line to load the hostname from cookies.
+    
     const savedHost = getCookie('hostname');
     if (savedHost) config.hostname = savedHost;
 
