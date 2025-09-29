@@ -53,7 +53,7 @@ function checkFPS() {
         frameCount = 0;
         lastFrameTime = currentTime;
 
-        if (fps > 0 && fps < 5) {
+        if (fps > 0 && fps < 1) {
             fpsMonitorEnabled = false; 
             isSystemBricked = true;
             triggerBSOD('VIDEO_TDR_FAILURE');
