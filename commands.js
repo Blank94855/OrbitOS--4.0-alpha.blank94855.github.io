@@ -18,13 +18,11 @@ function dragElement(elmnt, headerId) {
     let animationFrameId = null;
     const header = document.getElementById(headerId) || elmnt;
 
-    
     const transform = getComputedStyle(elmnt).transform;
     if (transform && transform !== 'none') {
         const matrix = transform.match(/matrix.*\((.+)\)/);
         if (matrix && matrix[1]) {
             const parts = matrix[1].split(', ');
-            
             if (parts.length === 6) { 
                 xOffset = parseFloat(parts[4]);
                 yOffset = parseFloat(parts[5]);
@@ -61,7 +59,6 @@ function dragElement(elmnt, headerId) {
         
         cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(() => {
-            // Preserve the original centering transform by adding our translation
             elmnt.style.transform = `translate(-50%, -50%) translate3d(${xOffset}px, ${yOffset}px, 0)`;
         });
     }
@@ -105,48 +102,59 @@ function updateFpsMonitor() {
 }
 
 const commands = {
-    help: () => `
-        <p><span class="highlight">Command List</span></p>
-        <br/>
-        <p class="highlight">--- [ General ] ---</p>
-        <p><span class="highlight-secondary">help</span>           - Shows this help message</p>
-        <p><span class="highlight-secondary">clear</span>          - Clears the terminal screen</p>
-        <p><span class="highlight-secondary">echo [text]</span>    - Prints the specified text</p>
-        <p><span class="highlight-secondary">date</span>           - Shows current date and time</p>
-        <p><span class="highlight-secondary">history</span>        - Shows command history</p>
-        <br/>
-        <p class="highlight">--- [ System ] ---</p>
-        <p><span class="highlight-secondary">fastfetch</span>      - Displays detailed system information</p>
-        <p><span class="highlight-secondary">whoami</span>         - Shows current user and host</p>
-        <p><span class="highlight-secondary">setname [name]</span> - Set a custom username</p>
-        <p><span class="highlight-secondary">sethost [name]</span> - Set a custom hostname</p>
-        <p><span class="highlight-secondary">fonts</span>          - Change the terminal font</p>
-        <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
-        <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
-        <p><span class="highlight-secondary">fps [on|off]</span>   - Toggles the FPS monitor</p>
-        <p><span class="highlight-secondary">stop [process]</span> - Stop a process or component</p>
-        <p><span class="highlight-secondary">software</span>       - View system software info and changelog</p>
-        <p><span class="highlight-secondary">reset</span>          - Reset all user data</p>
-        <p><span class="highlight-secondary">bios</span>           - Enter the BIOS utility</p>
-        <p><span class="highlight-secondary">shutdown</span>       - Shutsdown OrbitOS</p>
-        <p><span class="highlight-secondary">reboot</span>         - Reboots OrbitOS</p>
-        <p><span class="highlight-secondary">restart</span>        - Reboots OrbitOS</p>
-        <p><span class="highlight-secondary">rm -rf</span>         - ...</p>
-        <br/>
-        <p class="highlight">--- [ Tools & Media ] ---</p>
-        <p><span class="highlight-secondary">notes</span>          - Manage your notes (add, view, delete, clear)</p>
-        <p><span class="highlight-secondary">browser [url]</span>  - Opens a URL in a frame</p>
-        <p><span class="highlight-secondary">calc [expr]</span>    - Calculate mathematical expression</p>
-        <p><span class="highlight-secondary">wiki [query]</span>   - Search Wikipedia and display summary</p>
-        <p><span class="highlight-secondary">tts [text]</span>     - Text to speech</p>
-        <p><span class="highlight-secondary">translate [lang] [text]</span> - Translate text</p>
-        <p><span class="highlight-secondary">weather</span>        - Shows weather information</p>
-        <p><span class="highlight-secondary">fortune</span>        - Get a random fortune message</p>
-        <p><span class="highlight-secondary">cowsay [text]</span>  - Display a cow saying your message</p>
-        <p><span class="highlight-secondary">hide [player]</span>  - Hides/shows the music or video player</p>
-        <p><span class="highlight-secondary">music</span>          - Opens the music player</p>
-        <p><span class="highlight-secondary">video</span>          - Opens the video player</p>
-    `,
+    help: (args) => {
+        const page = args.trim();
+        if (page === '2') {
+            return `
+                <p><span class="highlight">Command List (Page 2/2)</span></p>
+                <br/>
+                <p class="highlight">--- [ Tools & Media ] ---</p>
+                <p><span class="highlight-secondary">notes</span>          - Manage your notes (add, view, delete, clear)</p>
+                <p><span class="highlight-secondary">browser [url]</span>  - Opens a URL in a frame</p>
+                <p><span class="highlight-secondary">calc [expr]</span>    - Calculate mathematical expression</p>
+                <p><span class="highlight-secondary">wiki [query]</span>   - Search Wikipedia and display summary</p>
+                <p><span class="highlight-secondary">tts [text]</span>     - Text to speech</p>
+                <p><span class="highlight-secondary">translate [lang] [text]</span> - Translate text</p>
+                <p><span class="highlight-secondary">weather</span>        - Shows weather information</p>
+                <p><span class="highlight-secondary">fortune</span>        - Get a random fortune message</p>
+                <p><span class="highlight-secondary">cowsay [text]</span>  - Display a cow saying your message</p>
+                <p><span class="highlight-secondary">hide [player]</span>  - Hides/shows the music or video player</p>
+                <p><span class="highlight-secondary">music</span>          - Opens the music player</p>
+                <p><span class="highlight-secondary">video</span>          - Opens the video player</p>
+            `;
+        } else {
+            return `
+                <p><span class="highlight">Command List (Page 1/2)</span></p>
+                <br/>
+                <p class="highlight">--- [ General ] ---</p>
+                <p><span class="highlight-secondary">help</span>           - Shows this help message</p>
+                <p><span class="highlight-secondary">clear</span>          - Clears the terminal screen</p>
+                <p><span class="highlight-secondary">echo [text]</span>    - Prints the specified text</p>
+                <p><span class="highlight-secondary">date</span>           - Shows current date and time</p>
+                <p><span class="highlight-secondary">history</span>        - Shows command history</p>
+                <br/>
+                <p class="highlight">--- [ System ] ---</p>
+                <p><span class="highlight-secondary">fastfetch</span>      - Displays detailed system information</p>
+                <p><span class="highlight-secondary">whoami</span>         - Shows current user and host</p>
+                <p><span class="highlight-secondary">setname [name]</span> - Set a custom username</p>
+                <p><span class="highlight-secondary">sethost [name]</span> - Set a custom hostname</p>
+                <p><span class="highlight-secondary">fonts</span>          - Change the terminal font</p>
+                <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
+                <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
+                <p><span class="highlight-secondary">fps [on|off]</span>   - Toggles the FPS monitor</p>
+                <p><span class="highlight-secondary">stop [process]</span> - Stop a process or component</p>
+                <p><span class="highlight-secondary">software</span>       - View system software info and changelog</p>
+                <p><span class="highlight-secondary">reset</span>          - Reset all user data</p>
+                <p><span class="highlight-secondary">bios</span>           - Enter the BIOS utility</p>
+                <p><span class="highlight-secondary">shutdown</span>       - Shutsdown OrbitOS</p>
+                <p><span class="highlight-secondary">reboot</span>         - Reboots OrbitOS</p>
+                <p><span class="highlight-secondary">restart</span>        - Reboots OrbitOS</p>
+                <p><span class="highlight-secondary">rm -rf</span>         - ...</p>
+                <br/>
+                <p>Type <span class="highlight">'help 2'</span> for more commands.</p>
+            `;
+        }
+    },
     fastfetch: () => {
         if (document.getElementById('fastfetch-container')) { document.getElementById('fastfetch-container').remove(); }
         const ffContainer = document.createElement('div');
@@ -209,7 +217,7 @@ const commands = {
             const summary = data.extract_html || data.extract;
             const pageUrl = data.content_urls.desktop.page;
             return `<div><h3 class="highlight" style="margin-bottom: 0.5rem;">${data.title}</h3><p>${summary}</p><a href="${pageUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-secondary);">Read full article...</a></div>`;
-        } catch (error) { console.error("Wikipedia API error:", error); return '<p class="error-message">Failed to fetch data from Wikipedia. Check your connection.</p>'; }
+        } catch (error) { return '<p class="error-message">Failed to fetch data from Wikipedia. Check your connection.</p>'; }
     },
     video: () => {
         if (document.getElementById('video-player-container')) return '<p class="error-message">Video player is already running.</p>';
@@ -254,8 +262,7 @@ const commands = {
         let totalTime = 0;
         const duration = 4000;
         const interval = 100;
-        const batchSize = 10; // Increased batch size
-
+        const batchSize = 10;
         const generateLines = () => {
             if (totalTime >= duration) {
                 triggerBSOD('CRITICAL_PROCESS_DIED');
@@ -265,9 +272,7 @@ const commands = {
             for (let i = 0; i < batchSize; i++) {
                 lineBatchHTML += `<p class="error-message" style="margin:0;line-height:1.2;">rm: /sys/lib/${Math.random().toString(36).substring(2)}: Permission denied</p>`;
             }
-            
             output.insertAdjacentHTML('beforeend', lineBatchHTML);
-
             scrollToBottom();
             totalTime += interval;
             setTimeout(generateLines, interval);
@@ -292,7 +297,7 @@ const commands = {
     cowsay: (args) => { const m=args.trim()||"Moo!";return`<pre style="font-family:var(--font-mono);">${` _${'_'.repeat(m.length)}_ \n< ${m} >\n -${'-'.repeat(m.length)}- \n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||`}</pre>`;},
     hide: (args) => { const target = args.trim().toLowerCase(); if (!target) return '<p>Usage: hide [music|video]</p>'; let hideBtn, name; if (target === 'music') { hideBtn = document.getElementById('hide-music-player'); name = 'Music player'; } else if (target === 'video') { hideBtn = document.getElementById('hide-video-player'); name = 'Video player'; } else { return `<p class="error-message">Cannot hide '${target}'. Valid options are 'music' or 'video'.</p>`; } if (hideBtn) { hideBtn.click(); const isHidden = hideBtn.innerHTML === '+'; return `<p>${isHidden ? 'Hiding' : 'Showing'} ${name}.</p>`; } else { return `<p class="error-message">${name} is not running.</p>`; } },
     tts: (args) => { if(!args.trim())return'<p>Usage: tts [text]</p>';if('speechSynthesis' in window){speechSynthesis.speak(new SpeechSynthesisUtterance(args));return'<p>Speaking...</p>'}else{return'<p class="error-message">TTS not supported.</p>'}},
-    translate: async (args) => { const parts = args.split(' '); if (parts.length < 2) { return '<p>Usage: translate [lang] [text]</p>'; } const targetLang = parts[0]; const textToTranslate = parts.slice(1).join(' '); const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`; try { const response = await fetch(url); if (!response.ok) { return '<p class="error-message">Translation service returned an error.</p>'; } const data = await response.json(); if (data && data[0] && data[0][0] && data[0][0][0]) { return `<p>${data[0][0][0]}</p>`; } else { return '<p class="error-message">Could not parse translation response.</p>'; } } catch (error) { console.error("Translation API error:", error); return '<p class="error-message">Failed to connect to the translation service. Check your connection.</p>'; } },
+    translate: async (args) => { const parts = args.split(' '); if (parts.length < 2) { return '<p>Usage: translate [lang] [text]</p>'; } const targetLang = parts[0]; const textToTranslate = parts.slice(1).join(' '); const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`; try { const response = await fetch(url); if (!response.ok) { return '<p class="error-message">Translation service returned an error.</p>'; } const data = await response.json(); if (data && data[0] && data[0][0] && data[0][0][0]) { return `<p>${data[0][0][0]}</p>`; } else { return '<p class="error-message">Could not parse translation response.</p>'; } } catch (error) { return '<p class="error-message">Failed to connect to the translation service. Check your connection.</p>'; } },
     reset: (args) => { if(args.trim()==='confirm'){deleteCookie('username');deleteCookie('hostname');deleteCookie('font');deleteCookie('lastLogin');localStorage.removeItem('orbitos_notes');output.innerHTML='<p>Data reset. Rebooting...</p>';setTimeout(()=>window.location.reload(),1500);return''}return`<p class="error-message">WARNING: This will erase all saved settings and notes. Type <span class="highlight">reset confirm</span> to proceed.</p>`;},
     setname: (args) => {
         const n = args.trim();
@@ -318,7 +323,6 @@ const commands = {
         document.getElementById('status-bar').style.display = 'none';
         const biosScreen = document.getElementById('bios-screen');
         const biosContainer = biosScreen.querySelector('.bios-container');
-
         const showMainMenu = () => {
             biosContainer.innerHTML = `
                 <h1>ORBIT BIOS UTILITY</h1>
@@ -340,7 +344,6 @@ const commands = {
                 inputField.focus();
             };
         };
-        
         const showResetConfirm = () => {
             biosContainer.innerHTML = `
                 <h1>CONFIRMATION</h1>
@@ -357,7 +360,6 @@ const commands = {
             };
             document.getElementById('bios-cancel-reset').onclick = showMainMenu;
         };
-        
         showMainMenu();
         biosScreen.style.display = 'flex';
         inputField.disabled = true;
@@ -366,7 +368,6 @@ const commands = {
     fps: (args) => {
         const monitor = document.getElementById('fps-monitor');
         const action = args.trim().toLowerCase();
-
         if (action === 'off') {
             if (fpsMonitorActive) {
                 fpsMonitorActive = false;
@@ -377,7 +378,6 @@ const commands = {
             }
             return '<p>FPS monitor is not active.</p>';
         }
-        
         if (action === 'on' || action === '') {
              if (fpsMonitorActive) {
                 return '<p>FPS monitor is already active. Use "fps off" to disable.</p>';
@@ -390,7 +390,6 @@ const commands = {
             setCookie('fpsMonitor', 'true', 365);
             return '<p>FPS monitor enabled.</p>';
         }
-
         return '<p>Usage: fps [on|off]</p>';
     },
     notes: (args) => {
@@ -399,7 +398,6 @@ const commands = {
         const parts = args.trim().split(' ');
         const action = parts[0];
         const content = parts.slice(1).join(' ');
-
         switch (action) {
             case 'add':
                 if (!content) return '<p>Usage: notes add [your note here]</p>';
@@ -432,4 +430,5 @@ const commands = {
         }
     },
 };
+
 
