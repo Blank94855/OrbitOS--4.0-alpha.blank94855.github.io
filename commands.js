@@ -159,10 +159,24 @@ const commands = {
                     <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
                     <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
                     <p><span class="highlight-secondary">fps [on|off]</span>   - Toggles the FPS monitor</p>
+                    <p><span class="highlight-secondary">lite [on|off]</span>  - Toggles performance-saving mode</p>
                     <br/>
                     <p>Type <span class="highlight">'help 2'</span> for more commands.</p>
                 `;
         }
+    },
+    lite: (args) => {
+        const action = args.trim().toLowerCase();
+        if (action === 'on') {
+            setCookie('liteMode', 'true', 365);
+            setTimeout(() => window.location.reload(), 1500);
+            return '<p>Lite mode enabled. Rebooting...</p>';
+        } else if (action === 'off') {
+            deleteCookie('liteMode');
+            setTimeout(() => window.location.reload(), 1500);
+            return '<p>Lite mode disabled. Rebooting...</p>';
+        }
+        return '<p>Usage: lite [on|off]</p>';
     },
     fastfetch: () => {
         if (document.getElementById('fastfetch-container')) { document.getElementById('fastfetch-container').remove(); }
@@ -430,7 +444,7 @@ const commands = {
                 }
                 notesToDelete.splice(index, 1);
                 saveNotes(notesToDelete);
-                return `<p>Deleted note ${index + 1}.</p>`;
+                return `<p>Deleted note ${index + 1}.</p>';
             case 'clear':
                 saveNotes([]);
                 return '<p>All notes have been cleared.</p>';
