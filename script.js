@@ -68,8 +68,9 @@ function simulateBootSequence() {
 
 function finalizeBootSequence() {
     const lastLogin = getCookie('lastLogin');
-    let welcomeMessage = `<p>Welcome to <span class="highlight">OrbitOS ${config.systemInfo.version}</span></p><p>Type 'help' for a list of commands</p>`;
+    let welcomeMessage = `<div class="command-block"><p>Welcome to <span class="highlight">OrbitOS ${config.systemInfo.version}</span></p><p>Type 'help' for a list of commands</p>`;
     if (lastLogin) { welcomeMessage += `<p><br/>Last login: ${new Date(lastLogin).toLocaleString()}</p>`; }
+    welcomeMessage += `</div>`;
     setCookie('lastLogin', new Date().toISOString(), 365);
     output.innerHTML = welcomeMessage;
     inputField.disabled = false; prompt.style.display = 'inline-block'; inputField.focus();
@@ -136,30 +137,41 @@ async function executeCommand(input) {
     }
 }
 
-async function displayResponse(input) {
-    const commandPara = document.createElement('p');
-    commandPara.innerHTML = `<span class="highlight-secondary">${prompt.textContent} </span>${input.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
-    output.appendChild(commandPara);
+async function displayResponse(rawInput) {
+    const input = rawInput.trim();
+    const commandBlock = document.createElement('div');
+    commandBlock.className = 'command-block';
+    
+    commandBlock.innerHTML = `<p><span class="highlight-secondary">${prompt.textContent} </span>${rawInput.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+    output.appendChild(commandBlock);
 
-    const isAsync = commands[input.trim().split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
+    if (!input) {
+        scrollToBottom();
+        inputField.value = '';
+        return;
+    }
+
+    const isAsync = commands[input.split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
     let loadingIndicator;
+
     if (isAsync) {
         loadingIndicator = document.createElement('p');
         loadingIndicator.textContent = 'Fetching...';
-        output.appendChild(loadingIndicator);
+        commandBlock.appendChild(loadingIndicator);
         scrollToBottom();
     }
 
-    const response = await executeCommand(input);
+    const responseHTML = await executeCommand(rawInput); 
     if (loadingIndicator) loadingIndicator.remove();
-    if (response) {
-        const responseDiv = document.createElement('div');
-        responseDiv.innerHTML = response;
-        output.appendChild(responseDiv);
+    
+    if (responseHTML) {
+        commandBlock.insertAdjacentHTML('beforeend', responseHTML);
     }
+
     scrollToBottom();
     inputField.value = '';
 }
+
 
 function scrollToBottom() {
     requestAnimationFrame(() => {
@@ -169,6 +181,15 @@ function scrollToBottom() {
 
 
 window.addEventListener('DOMContentLoaded', async () => {
+    const style = document.createElement('style');
+    style.textContent = `
+        .command-block {
+            content-visibility: auto;
+            contain-intrinsic-size: 40px;
+        }
+    `;
+    document.head.appendChild(style);
+
     loadSettings();
     if (getCookie('fpsMonitor') === 'true') {
         commands.fps('on');
@@ -189,10 +210,8 @@ inputField.addEventListener('keydown', (e) => {
     if (isSystemBricked) { e.preventDefault(); return; }
     if (e.key === 'Enter') {
         e.preventDefault();
-        const input = inputField.value.trim();
-        if (input) { displayResponse(input); }
-        else { const p = document.createElement('p'); p.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>`; output.appendChild(p); scrollToBottom(); }
-        inputField.value = ''; historyIndex = commandHistory.length;
+        displayResponse(inputField.value);
+        historyIndex = commandHistory.length;
     } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (historyIndex > 0) { historyIndex--; inputField.value = commandHistory[historyIndex]; inputField.setSelectionRange(inputField.value.length, inputField.value.length); }
@@ -210,5 +229,4 @@ inputField.addEventListener('focus', () => {
 });
 
 terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
-
 
