@@ -63,49 +63,47 @@ const commands = {
             case 1:
                 output += `
                     <p class="highlight">--- [ General ] ---</p>
-                    <p><span class="highlight-secondary">help [page]</span>  - Shows this help message</p>
+                    <p><span class="highlight-secondary">help [page]</span>    - Shows this help message</p>
                     <p><span class="highlight-secondary">clear</span>          - Clears the terminal screen</p>
                     <p><span class="highlight-secondary">echo [text]</span>    - Prints the specified text</p>
                     <p><span class="highlight-secondary">date</span>           - Shows current date and time</p>
                     <p><span class="highlight-secondary">history</span>        - Shows command history</p>
                     <br/>
-                    <p class="highlight">--- [ System ] ---</p>
-                    <p><span class="highlight-secondary">fastfetch</span>      - Displays detailed system information</p>
+                    <p class="highlight">--- [ Customization ] ---</p>
                     <p><span class="highlight-secondary">whoami</span>         - Shows current user and host</p>
                     <p><span class="highlight-secondary">setname [name]</span> - Set a custom username</p>
                     <p><span class="highlight-secondary">sethost [name]</span> - Set a custom hostname</p>
                     <p><span class="highlight-secondary">fonts</span>          - Change the terminal font</p>
-                    <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
                     <br/>
-                    <p>Type <span class="highlight-secondary">'help 2'</span> for the next page.</p>
+                    <p>Type <span class="highlight">'help 2'</span> or <span class="highlight">'help 3'</span> to see other commands.</p>
                 `;
                 break;
             case 2:
                 output += `
-                    <p class="highlight">--- [ System Cont. ] ---</p>
+                    <p class="highlight">--- [ System ] ---</p>
+                    <p><span class="highlight-secondary">fastfetch</span>      - Displays detailed system information</p>
+                    <p><span class="highlight-secondary">software</span>       - View system software info and changelog</p>
+                    <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
                     <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
                     <p><span class="highlight-secondary">stop [process]</span> - Stop a process or component</p>
-                    <p><span class="highlight-secondary">software</span>       - View system software info and changelog</p>
                     <p><span class="highlight-secondary">reset</span>          - Reset all user data</p>
                     <p><span class="highlight-secondary">bios</span>           - Enter the BIOS utility</p>
                     <p><span class="highlight-secondary">shutdown</span>       - Shutsdown OrbitOS</p>
                     <p><span class="highlight-secondary">reboot</span>         - Reboots OrbitOS</p>
                     <p><span class="highlight-secondary">rm -rf</span>         - ...</p>
                     <br/>
-                     <p class="highlight">--- [ Tools & Media ] ---</p>
-                    <p><span class="highlight-secondary">notes</span>          - Manage your notes (add, view, delete, clear)</p>
-                    <p><span class="highlight-secondary">browser [url]</span>  - Opens a URL in a frame</p>
-                    <p><span class="highlight-secondary">calc [expr]</span>    - Calculate mathematical expression</p>
-                    <br/>
-                    <p>Type <span class="highlight-secondary">'help 3'</span> for the next page.</p>
+                    <p>Type <span class="highlight">'help 3'</span> to see media and tool commands.</p>
                 `;
                 break;
             case 3:
                 output += `
-                    <p class="highlight">--- [ Tools & Media Cont. ] ---</p>
+                    <p class="highlight">--- [ Tools & Media ] ---</p>
+                    <p><span class="highlight-secondary">notes</span>          - Manage your notes (add, view, delete, clear)</p>
+                    <p><span class="highlight-secondary">browser [url]</span>  - Opens a URL in a frame</p>
+                    <p><span class="highlight-secondary">calc [expr]</span>    - Calculate mathematical expression</p>
                     <p><span class="highlight-secondary">wiki [query]</span>   - Search Wikipedia and display summary</p>
                     <p><span class="highlight-secondary">tts [text]</span>     - Text to speech</p>
-                    <p><span class="highlight-secondary">translate [lang] [text]</span> - Translate text</p>
+                    <p><span class="highlight-secondary">translate [l] [t]</span> - Translate text</p>
                     <p><span class="highlight-secondary">weather</span>        - Shows weather information</p>
                     <p><span class="highlight-secondary">fortune</span>        - Get a random fortune message</p>
                     <p><span class="highlight-secondary">cowsay [text]</span>  - Display a cow saying your message</p>
@@ -219,7 +217,7 @@ const commands = {
         close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
         dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
     },
-    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString()}</p><br><p><strong>Orbit OS 4.0 Alpha 3 – UI Polish & Safety Update</strong></p><p style="color: var(--accent-secondary);">This update improves mobile usability, adds a safety feature to the BIOS, and polishes the user interface for a cleaner experience.</p><br><p><strong>BIOS Reset Confirmation</strong></p><p style="color: var(--accent-secondary);">To prevent accidental data loss, the 'Reset All User Data' option in the BIOS now requires an explicit confirmation before proceeding.</p><br><p><strong>Mobile Viewport Fix</strong></p><p style="color: var(--accent-secondary);">The terminal now correctly adjusts its size when the on-screen keyboard is opened on mobile devices, ensuring the command input is always visible.</p><br><p><strong>UI and Performance Tweaks</strong></p><p style="color: var(--accent-secondary);">The default blue highlight on interactive elements has been removed for a more consistent aesthetic. The command prompt has been slightly adjusted for better readability. Minor under-the-hood adjustments have been made for a smoother feel.</p></div>`,
+    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString()}</p><br><p><strong>Orbit OS 4.0 Alpha 3 – UI Polish & Safety Update</strong></p><p style="color: var(--accent-secondary);">This update improves mobile usability, adds a critical safety feature to the BIOS, and polishes the user interface for a cleaner experience.</p><br><p><strong>BIOS Reset Confirmation</strong></p><p style="color: var(--accent-secondary);">To prevent accidental data loss, the 'Reset All User Data' option in the BIOS now requires an explicit confirmation before proceeding.</p><br><p><strong>Mobile Viewport Fix</strong></p><p style="color: var(--accent-secondary);">The terminal now correctly adjusts its size when the on-screen keyboard is opened on mobile devices, ensuring the command input is always visible.</p><br><p><strong>UI and Performance Tweaks</strong></p><p style="color: var(--accent-secondary);">The default blue highlight on interactive elements has been removed for a more consistent aesthetic. The command prompt has been slightly adjusted for better readability. Minor under-the-hood adjustments have been made for a smoother feel.</p></div>`,
     browser: (args) => { const u = args.trim(); if (!u) return `<p>Usage: browser [url]</p>`; if (!u.startsWith('http')) return `<p class="error-message">Invalid URL. Please include http:// or https://</p>`; return `<p class="error-message">⚠️ Note: Not all websites support being loaded in a frame.</p><p>Loading ${u}...</p><div style="width:100%; height:600px; border: 1px solid var(--outline); margin-top: 10px; background-color: white; border-radius: 8px; overflow: hidden;"><iframe src="${u}" style="width:100%; height:100%; border:none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe></div>`; },
     rm: (args) => {
         if (args.trim() !== '-rf') return `<p>rm: missing operand</p>`;
