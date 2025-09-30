@@ -11,17 +11,17 @@ let commandHistory = [];
 let historyIndex = -1;
 
 const bootSequence = [ "Starting system...", "Loading kernel modules...", "Mounting /system...", "Starting ueventd...", "Starting servicemanager...", "Starting zygote...", "Boot completed." ];
-const config = { 
-    username: 'root', 
-    hostname: 'orbit', 
-    lastBootTime: new Date(), 
-    systemInfo: { 
-        os: 'OrbitOS', 
-        version: '4.0. - alpha 2',
-        build: `20250929-${Math.floor(Math.random() * 900) + 100}`,
+const config = {
+    username: 'root',
+    hostname: 'orbit',
+    lastBootTime: new Date(),
+    systemInfo: {
+        os: 'OrbitOS',
+        version: '4.0. - alpha 3',
+        build: `20250930-${Math.floor(Math.random() * 900) + 100}`,
         kernel: '6.5.0-orbit'
-    }, 
-    batteryInfo: {}, 
+    },
+    batteryInfo: {},
 };
 
 function triggerBSOD(errorCode) {
@@ -42,7 +42,6 @@ function deleteCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 
 function loadSettings() {
     const savedUser = getCookie('username');
     if (savedUser) config.username = savedUser;
-
 
     const savedHost = getCookie('hostname');
     if (savedHost) config.hostname = savedHost;
@@ -74,7 +73,7 @@ function finalizeBootSequence() {
     setCookie('lastLogin', new Date().toISOString(), 365);
     output.innerHTML = welcomeMessage;
     inputField.disabled = false; prompt.style.display = 'inline-block'; inputField.focus();
-    prompt.textContent = `${config.username}@${config.hostname}:~$ `;
+    prompt.textContent = `${config.username}@${config.hostname}:~$`;
 }
 
 function updateLockScreenTime() {
@@ -100,7 +99,7 @@ async function updateBatteryStatus() {
             const levelEl = document.getElementById('battery-level');
             const iconEl = document.getElementById('battery-icon');
             if (levelEl) levelEl.textContent = `${config.batteryInfo.level}%`;
-            if (battery.charging) { iconEl.innerHTML = `<path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" y1="13" x2="23" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline>`; } 
+            if (battery.charging) { iconEl.innerHTML = `<path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" y1="13" x2="23" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline>`; }
             else { iconEl.innerHTML = `<rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line>`; }
         };
         updateLevel();
@@ -131,7 +130,6 @@ async function executeCommand(input) {
     if (typeof commandFunction === 'function') {
         if (trimmedInput && commandHistory[commandHistory.length - 1] !== trimmedInput) { commandHistory.push(trimmedInput); }
         historyIndex = commandHistory.length;
-
         return await commandFunction(args.join(' '));
     } else {
         return `<p class="error-message">Command not found: ${command}. Type 'help' for available commands.</p>`;
@@ -140,9 +138,8 @@ async function executeCommand(input) {
 
 async function displayResponse(input) {
     const commandPara = document.createElement('p');
-    commandPara.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>${input.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+    commandPara.innerHTML = `<span class="highlight-secondary">${prompt.textContent} </span>${input.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
     output.appendChild(commandPara);
-
 
     const isAsync = commands[input.trim().split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
     let loadingIndicator;
@@ -154,13 +151,11 @@ async function displayResponse(input) {
     }
 
     const response = await executeCommand(input);
-
     if (loadingIndicator) loadingIndicator.remove();
-
-    if (response) { 
-        const responseDiv = document.createElement('div'); 
-        responseDiv.innerHTML = response; 
-        output.appendChild(responseDiv); 
+    if (response) {
+        const responseDiv = document.createElement('div');
+        responseDiv.innerHTML = response;
+        output.appendChild(responseDiv);
     }
     scrollToBottom();
     inputField.value = '';
@@ -200,6 +195,11 @@ inputField.addEventListener('keydown', (e) => {
     }
 });
 
-terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
+inputField.addEventListener('focus', () => {
+    setTimeout(() => {
+        scrollToBottom();
+    }, 100);
+});
 
+terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
 
