@@ -18,13 +18,13 @@ function dragElement(elmnt, headerId) {
     let animationFrameId = null;
     const header = document.getElementById(headerId) || elmnt;
 
-    // Attempt to parse existing translate values if any
+    
     const transform = getComputedStyle(elmnt).transform;
     if (transform && transform !== 'none') {
         const matrix = transform.match(/matrix.*\((.+)\)/);
         if (matrix && matrix[1]) {
             const parts = matrix[1].split(', ');
-            // Assuming the transform is of the form translate(x, y) or matrix(..., x, y)
+            
             if (parts.length === 6) { 
                 xOffset = parseFloat(parts[4]);
                 yOffset = parseFloat(parts[5]);
@@ -265,7 +265,7 @@ const commands = {
             for (let i = 0; i < batchSize; i++) {
                 lineBatchHTML += `<p class="error-message" style="margin:0;line-height:1.2;">rm: /sys/lib/${Math.random().toString(36).substring(2)}: Permission denied</p>`;
             }
-            // Use insertAdjacentHTML for performant batch DOM insertion
+            
             output.insertAdjacentHTML('beforeend', lineBatchHTML);
 
             scrollToBottom();
