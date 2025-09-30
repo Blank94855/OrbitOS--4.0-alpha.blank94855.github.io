@@ -11,17 +11,17 @@ let commandHistory = [];
 let historyIndex = -1;
 
 const bootSequence = [ "Starting system...", "Loading kernel modules...", "Mounting /system...", "Starting ueventd...", "Starting servicemanager...", "Starting zygote...", "Boot completed." ];
-const config = {
-    username: 'root',
-    hostname: 'orbit',
-    lastBootTime: new Date(),
-    systemInfo: {
-        os: 'OrbitOS',
-        version: '4.0. - alpha 5',
+const config = { 
+    username: 'root', 
+    hostname: 'orbit', 
+    lastBootTime: new Date(), 
+    systemInfo: { 
+        os: 'OrbitOS', 
+        version: '4.0. - alpha 3',
         build: `20250930-${Math.floor(Math.random() * 900) + 100}`,
         kernel: '6.5.0-orbit'
-    },
-    batteryInfo: {},
+    }, 
+    batteryInfo: {}, 
 };
 
 function triggerBSOD(errorCode) {
@@ -68,13 +68,12 @@ function simulateBootSequence() {
 
 function finalizeBootSequence() {
     const lastLogin = getCookie('lastLogin');
-    let welcomeMessage = `<div class="command-block"><p>Welcome to <span class="highlight">OrbitOS ${config.systemInfo.version}</span></p><p>Type 'help' for a list of commands</p>`;
+    let welcomeMessage = `<p>Welcome to <span class="highlight">OrbitOS ${config.systemInfo.version}</span></p><p>Type 'help' for a list of commands</p>`;
     if (lastLogin) { welcomeMessage += `<p><br/>Last login: ${new Date(lastLogin).toLocaleString()}</p>`; }
-    welcomeMessage += `</div>`;
     setCookie('lastLogin', new Date().toISOString(), 365);
     output.innerHTML = welcomeMessage;
     inputField.disabled = false; prompt.style.display = 'inline-block'; inputField.focus();
-    prompt.textContent = `${config.username}@${config.hostname}:~$`;
+    prompt.textContent = `${config.username}@${config.hostname}:~$ `;
 }
 
 function updateLockScreenTime() {
@@ -100,7 +99,7 @@ async function updateBatteryStatus() {
             const levelEl = document.getElementById('battery-level');
             const iconEl = document.getElementById('battery-icon');
             if (levelEl) levelEl.textContent = `${config.batteryInfo.level}%`;
-            if (battery.charging) { iconEl.innerHTML = `<path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" y1="13" x2="23" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline>`; }
+            if (battery.charging) { iconEl.innerHTML = `<path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" y1="13" x2="23" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline>`; } 
             else { iconEl.innerHTML = `<rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line>`; }
         };
         updateLevel();
@@ -131,84 +130,44 @@ async function executeCommand(input) {
     if (typeof commandFunction === 'function') {
         if (trimmedInput && commandHistory[commandHistory.length - 1] !== trimmedInput) { commandHistory.push(trimmedInput); }
         historyIndex = commandHistory.length;
+
         return await commandFunction(args.join(' '));
     } else {
         return `<p class="error-message">Command not found: ${command}. Type 'help' for available commands.</p>`;
     }
 }
 
-async function displayResponse(rawInput) {
-    const input = rawInput.trim();
-    const commandBlock = document.createElement('div');
-    commandBlock.className = 'command-block';
-    
-    commandBlock.innerHTML = `<p><span class="highlight-secondary">${prompt.textContent} </span>${rawInput.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
-    output.appendChild(commandBlock);
+async function displayResponse(input) {
+    const commandPara = document.createElement('p');
+    commandPara.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>${input.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+    output.appendChild(commandPara);
 
-    if (!input) {
-        scrollToBottom();
-        inputField.value = '';
-        return;
-    }
-
-    const isAsync = commands[input.split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
+    const isAsync = commands[input.trim().split(' ')[0].toLowerCase()]?.constructor.name === 'AsyncFunction';
     let loadingIndicator;
-
     if (isAsync) {
         loadingIndicator = document.createElement('p');
         loadingIndicator.textContent = 'Fetching...';
-        commandBlock.appendChild(loadingIndicator);
+        output.appendChild(loadingIndicator);
         scrollToBottom();
     }
 
-    const responseHTML = await executeCommand(rawInput); 
-    if (loadingIndicator) loadingIndicator.remove();
-    
-    if (responseHTML) {
-        commandBlock.insertAdjacentHTML('beforeend', responseHTML);
-    }
+    const response = await executeCommand(input);
 
+    if (loadingIndicator) loadingIndicator.remove();
+
+    if (response) { 
+        const responseDiv = document.createElement('div'); 
+        responseDiv.innerHTML = response; 
+        output.appendChild(responseDiv); 
+    }
     scrollToBottom();
     inputField.value = '';
 }
 
-function scrollToBottom() {
-    requestAnimationFrame(() => {
-        output.scrollTop = output.scrollHeight;
-    });
-}
+function scrollToBottom() { setTimeout(() => { output.scrollTop = output.scrollHeight; }, 50); }
 
 window.addEventListener('DOMContentLoaded', async () => {
-    const style = document.createElement('style');
-    style.textContent = `
-        .command-block {
-            content-visibility: auto;
-            contain-intrinsic-size: 40px;
-        }
-    `;
-    document.head.appendChild(style);
-    
-    if (getCookie('liteMode') === 'true') {
-        document.body.classList.add('lite-mode');
-        const liteStyle = document.createElement('style');
-        liteStyle.textContent = `
-            .lite-mode * {
-                transition: none !important;
-                animation: none !important;
-            }
-            .lite-mode [id*="-container"], .lite-mode .terminal {
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                box-shadow: none !important;
-            }
-        `;
-        document.head.appendChild(liteStyle);
-    }
-
     loadSettings();
-    if (getCookie('fpsMonitor') === 'true' && !document.body.classList.contains('lite-mode')) {
-        commands.fps('on');
-    }
     updateLockScreenTime(); setInterval(updateLockScreenTime, 1000);
     dragElement(terminalElement, 'terminal-header');
 
@@ -225,8 +184,10 @@ inputField.addEventListener('keydown', (e) => {
     if (isSystemBricked) { e.preventDefault(); return; }
     if (e.key === 'Enter') {
         e.preventDefault();
-        displayResponse(inputField.value);
-        historyIndex = commandHistory.length;
+        const input = inputField.value.trim();
+        if (input) { displayResponse(input); }
+        else { const p = document.createElement('p'); p.innerHTML = `<span class="highlight-secondary">${prompt.textContent}</span>`; output.appendChild(p); scrollToBottom(); }
+        inputField.value = ''; historyIndex = commandHistory.length;
     } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (historyIndex > 0) { historyIndex--; inputField.value = commandHistory[historyIndex]; inputField.setSelectionRange(inputField.value.length, inputField.value.length); }
@@ -237,12 +198,5 @@ inputField.addEventListener('keydown', (e) => {
     }
 });
 
-inputField.addEventListener('focus', () => {
-    setTimeout(() => {
-        scrollToBottom();
-    }, 100);
-});
-
 terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
-
 
