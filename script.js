@@ -172,13 +172,11 @@ async function displayResponse(rawInput) {
     inputField.value = '';
 }
 
-
 function scrollToBottom() {
     requestAnimationFrame(() => {
         output.scrollTop = output.scrollHeight;
     });
 }
-
 
 window.addEventListener('DOMContentLoaded', async () => {
     const style = document.createElement('style');
@@ -229,4 +227,5 @@ inputField.addEventListener('focus', () => {
 });
 
 terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
+
 
