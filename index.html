@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OrbitOS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,17 +22,25 @@
             --font-mono: 'JetBrains Mono', monospace;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        *:focus { outline: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body { height: 100%; overflow: hidden; cursor: default; user-select: none; }
-
+        
         body {
             font-family: var(--font-main);
             background: var(--background);
             color: var(--on-surface);
             display: flex; justify-content: center; align-items: center;
             background-image: radial-gradient(ellipse at top, #1f242c, #0d1117);
+            overscroll-behavior-y: contain;
+        }
+
+        button, input {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:focus, button:focus-visible, input:focus, input:focus-visible {
+            outline: none;
         }
 
         #lock-screen {
@@ -91,19 +99,16 @@
         .control-dot { width: 12px; height: 12px; border-radius: 50%; }
         .control-dot:nth-child(1) { background-color: #ff5f56; } .control-dot:nth-child(2) { background-color: #ffbd2e; } .control-dot:nth-child(3) { background-color: #27c93f; }
 
-        .output {
-            padding: 1.5rem; flex-grow: 1; overflow-y: auto; line-height: 1.7; font-size: 0.9rem;
-            contain: layout style;
-            will-change: scroll-position;
-        }
+        .output { padding: 1.5rem; flex-grow: 1; overflow-y: auto; line-height: 1.7; font-size: 0.9rem; user-select: text; }
         .output > * { animation: textFadeIn 0.4s ease; }
         .output p, .output div, .output pre { margin-bottom: 0.5rem; color: var(--on-surface); }
         .highlight { color: var(--accent-primary); }
         .highlight-secondary { color: var(--accent-secondary); }
         .error-message { color: var(--error); }
 
-        .command { display: flex; align-items: center; padding: 1rem 1.5rem; background-color: rgba(22, 27, 34, 0.5); border-top: 1px solid var(--outline); flex-shrink: 0; gap: 8px; }
-        .input-field { background-color: transparent; border: none; color: var(--on-surface); font-size: 0.9rem; width: 100%; outline: none; font-family: inherit; }
+        .command { display: flex; align-items: center; padding: 1rem 1.5rem; background-color: rgba(22, 27, 34, 0.5); border-top: 1px solid var(--outline); flex-shrink: 0; }
+        #prompt { margin-right: 0.5rem; }
+        .input-field { background-color: transparent; border: none; color: var(--on-surface); font-size: 0.9rem; width: 100%; outline: none; font-family: inherit; user-select: text; }
         .input-field:focus { caret-color: var(--accent-primary); }
         .input-field::placeholder { color: var(--accent-secondary); opacity: 0.7; }
 
@@ -195,22 +200,6 @@
             box-shadow: 0 0 15px var(--error);
         }
 
-        #fps-monitor {
-            position: fixed;
-            top: 50px;
-            right: 10px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(5px);
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            color: var(--on-surface);
-            z-index: 10001;
-            display: none;
-            border: 1px solid var(--outline);
-        }
-
         .output::-webkit-scrollbar { width: 8px; }
         .output::-webkit-scrollbar-track { background: transparent; }
         .output::-webkit-scrollbar-thumb { background: var(--outline); border-radius: 4px; }
@@ -220,8 +209,8 @@
         @keyframes slideDown { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 600px) {
-            .os-container { padding: 40px 0 0 0; }
-            .terminal { width: 100%; height: 100%; max-height: none; border-radius: 0; border-left: none; border-right: none; }
+            .os-container { padding: 40px 0 0 0; height: 100%; }
+            .terminal { width: 100%; height: 100%; max-height: none; border-radius: 0; }
             #lock-time { font-size: 5rem; } #lock-date { font-size: 1.2rem; }
             .player-minimized {
                  width: calc(100% - 20px) !important;
@@ -245,8 +234,6 @@
             <svg id="battery-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
         </div>
     </div>
-    
-    <div id="fps-monitor"></div>
 
     <div class="os-container">
         <div class="terminal" style="display: none;">
@@ -276,6 +263,12 @@
 
     <div id="bios-screen" class="overlay-screen" style="display: none;">
         <div class="bios-container">
+            <h1>ORBIT BIOS UTILITY</h1>
+            <div class="bios-menu">
+                <button class="bios-button" id="bios-restart">Restart System</button>
+                <button class="bios-button danger" id="bios-reset">Reset All User Data</button>
+                <button class="bios-button" id="bios-exit">Exit BIOS</button>
+            </div>
         </div>
     </div>
 
@@ -283,5 +276,4 @@
     <script src="script.js"></script>
 </body>
 </html>
-
 
