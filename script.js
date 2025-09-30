@@ -123,7 +123,7 @@ function applyFont(fontNumber) {
 async function executeCommand(input) {
     if (isSystemBricked) return '<p class="error-message">System halted. Please reboot.</p>';
     const trimmedInput = input.trim(); if (!trimmedInput) return '';
-    const [command, ...args] broadcasters = trimmedInput.split(' ');
+    const [command, ...args] = trimmedInput.split(' ');
     const lowerCaseCommand = command.toLowerCase();
     const commandFunction = commands[lowerCaseCommand] || (command === 'rm' && args[0] === '-rf' ? commands.rm : null);
 
