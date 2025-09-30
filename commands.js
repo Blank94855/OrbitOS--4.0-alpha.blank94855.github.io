@@ -53,6 +53,7 @@ const lastUpdatedDate = new Date('2025-09-30');
 let fpsMonitorActive = false;
 let lastFpsTime = performance.now();
 let frameCount = 0;
+let fpsLoopId;
 
 function updateFpsMonitor() {
     if (!fpsMonitorActive) return;
@@ -63,7 +64,7 @@ function updateFpsMonitor() {
         frameCount = 0;
         lastFpsTime = now;
     }
-    requestAnimationFrame(updateFpsMonitor);
+    fpsLoopId = requestAnimationFrame(updateFpsMonitor);
 }
 
 const commands = {
@@ -207,25 +208,35 @@ const commands = {
         close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
         dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
     },
-    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString()}</p><br><p><strong>Orbit OS 4.0 Alpha 3 – Performance & UI Polish</strong></p><p style="color: var(--accent-secondary);">This update introduces a new performance utility and various quality-of-life improvements to enhance the user experience.</p><br><p><strong>New 'fps' Command</strong></p><p style="color: var(--accent-secondary);">A new performance monitor can be toggled using the 'fps' command. This displays a real-time Frames Per Second counter in the corner of the screen, perfect for monitoring UI performance.</p><br><p><strong>BIOS Safety & UI Fixes</strong></p><p style="color: var(--accent-secondary);">The BIOS 'Reset User Data' option now requires confirmation to prevent accidental data loss. Several UI bugs have been fixed, including the removal of the blue outline on button clicks and improved spacing for the command prompt.</p><br><p><strong>Improved Mobile Experience</strong></p><p style="color: var(--accent-secondary);">The terminal view now properly adjusts when the on-screen keyboard is opened on mobile devices, ensuring the command input area remains visible while typing.</p></div>`,
+    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString()}</p><br><p><strong>Orbit OS 4.0 Alpha 4 – Performance Overhaul</strong></p><p style="color: var(--accent-secondary);">This update significantly improves UI responsiveness and makes the FPS monitor setting persistent across reboots.</p><br><p><strong>Rendering & Scrolling Optimization</strong></p><p style="color: var(--accent-secondary);">The terminal's rendering engine has been optimized to handle rapid text output and scrolling much more smoothly. This reduces lag and jank, especially on budget devices, providing a higher and more stable framerate.</p><br><p><strong>Persistent FPS Monitor</strong></p><p style="color: var(--accent-secondary);">Your preference for the FPS monitor is now saved. If you enable it, it will automatically appear the next time you boot OrbitOS.</p><br><p><strong>Optimized High-Volume Commands</strong></p><p style="color: var(--accent-secondary);">Commands that produce a large amount of output, like the 'rm -rf' simulation, now use a batch-rendering process to avoid overwhelming the system and causing performance dips.</p></div>`,
     browser: (args) => { const u = args.trim(); if (!u) return `<p>Usage: browser [url]</p>`; if (!u.startsWith('http')) return `<p class="error-message">Invalid URL. Please include http:// or https://</p>`; return `<p class="error-message">⚠️ Note: Not all websites support being loaded in a frame.</p><p>Loading ${u}...</p><div style="width:100%; height:600px; border: 1px solid var(--outline); margin-top: 10px; background-color: white; border-radius: 8px; overflow: hidden;"><iframe src="${u}" style="width:100%; height:100%; border:none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe></div>`; },
     rm: (args) => {
         if (args.trim() !== '-rf') return `<p>rm: missing operand</p>`;
         inputField.disabled = true;
         prompt.style.display = 'none';
-        const i = setInterval(() => {
-            const p = document.createElement('p');
-            p.className = 'error-message';
-            p.style.margin = '0';
-            p.style.lineHeight = '1.2';
-            p.textContent = `rm: /sys/lib/${Math.random().toString(36).substring(2)}: Permission denied`;
-            output.appendChild(p);
+        let totalTime = 0;
+        const duration = 4000;
+        const interval = 100;
+        const batchSize = 5;
+
+        const generateLines = () => {
+            if (totalTime >= duration) {
+                triggerBSOD('CRITICAL_PROCESS_DIED');
+                return;
+            }
+            let lineBatch = '';
+            for(let i=0; i<batchSize; i++){
+                 lineBatch += `<p class="error-message" style="margin:0;line-height:1.2;">rm: /sys/lib/${Math.random().toString(36).substring(2)}: Permission denied</p>`;
+            }
+            const div = document.createElement('div');
+            div.innerHTML = lineBatch;
+            output.appendChild(div);
+
             scrollToBottom();
-        }, 40);
-        setTimeout(() => {
-            clearInterval(i);
-            triggerBSOD('CRITICAL_PROCESS_DIED');
-        }, 4000);
+            totalTime += interval;
+            setTimeout(generateLines, interval);
+        };
+        generateLines();
         return '';
     },
     fonts: (args) => { const n=parseInt(args.trim()),f={1:"JetBrains Mono",2:"Fira Code",3:"Source Code Pro",4:"IBM Plex Mono",5:"Anonymous Pro",6:"Roboto Mono",7:"Space Mono",8:"Ubuntu Mono",9:"VT323",10:"Nanum Gothic Coding",11:"Cutive Mono",12:"Share Tech Mono",13:"Major Mono Display",14:"Nova Mono",15:"Syne Mono"};if(!args||isNaN(n)){let l='<p>Available fonts:</p>';for(const[i,m]of Object.entries(f)){l+=`<p>${i}. ${m}${i==1?' (Default)':''}</p>`}l+='<p>Usage: fonts [number]</p>';return l}if(applyFont(n)){setCookie('font',n,365);return`<p>Font set to ${f[n]}.</p>`}else{return'<p class="error-message">Invalid font number.</p>'}},
@@ -323,22 +334,28 @@ const commands = {
         if (action === 'off') {
             if (fpsMonitorActive) {
                 fpsMonitorActive = false;
+                cancelAnimationFrame(fpsLoopId);
                 monitor.style.display = 'none';
+                deleteCookie('fpsMonitor');
                 return '<p>FPS monitor disabled.</p>';
             }
             return '<p>FPS monitor is not active.</p>';
         }
-
-        if (fpsMonitorActive) {
-            return '<p>FPS monitor is already active. Use "fps off" to disable.</p>';
+        
+        if (action === 'on' || action === '') {
+             if (fpsMonitorActive) {
+                return '<p>FPS monitor is already active. Use "fps off" to disable.</p>';
+             }
+            monitor.style.display = 'block';
+            fpsMonitorActive = true;
+            lastFpsTime = performance.now();
+            frameCount = 0;
+            updateFpsMonitor();
+            setCookie('fpsMonitor', 'true', 365);
+            return '<p>FPS monitor enabled.</p>';
         }
 
-        monitor.style.display = 'block';
-        fpsMonitorActive = true;
-        lastFpsTime = performance.now();
-        frameCount = 0;
-        updateFpsMonitor();
-        return '<p>FPS monitor enabled.</p>';
+        return '<p>Usage: fps [on|off]</p>';
     },
     notes: (args) => {
         const getNotes = () => JSON.parse(localStorage.getItem('orbitos_notes')) || [];
@@ -379,4 +396,5 @@ const commands = {
         }
     },
 };
+
 
