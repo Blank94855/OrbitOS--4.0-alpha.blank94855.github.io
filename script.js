@@ -72,7 +72,7 @@ function finalizeBootSequence() {
     if (lastLogin) { welcomeMessage += `<p><br/>Last login: ${new Date(lastLogin).toLocaleString()}</p>`; }
     setCookie('lastLogin', new Date().toISOString(), 365);
     output.innerHTML = welcomeMessage;
-    inputField.disabled = false; prompt.style.display = 'inline-block'; inputField.focus();
+    inputField.disabled = false; prompt.style.display = 'inline-block';
     prompt.textContent = `${config.username}@${config.hostname}:~$ `;
 }
 
