@@ -15,9 +15,7 @@ function deleteCookie(name) {
 function dragElement(elmnt, headerId) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     const header = document.getElementById(headerId) || elmnt;
-
     if (header) { header.onmousedown = dragMouseDown; header.style.cursor = 'grab'; }
-
     function dragMouseDown(e) {
         e = e || window.event; e.preventDefault();
         pos3 = e.clientX; pos4 = e.clientY;
@@ -25,7 +23,6 @@ function dragElement(elmnt, headerId) {
         if (header) header.style.cursor = 'grabbing';
         elmnt.style.transition = 'none';
     }
-
     function elementDrag(e) {
         e = e || window.event; e.preventDefault();
         pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
@@ -33,7 +30,6 @@ function dragElement(elmnt, headerId) {
         elmnt.style.top = `${elmnt.offsetTop - pos2}px`;
         elmnt.style.left = `${elmnt.offsetLeft - pos1}px`;
     }
-
     function closeDragElement() {
         document.onmouseup = null; document.onmousemove = null;
         if (header) header.style.cursor = 'grab';
@@ -52,7 +48,23 @@ const weatherData = [
     { city: "Toronto, CA", temp: "19°C", desc: "Cool Breeze" }
 ];
 
-const lastUpdatedDate = new Date('2025-09-29');
+const lastUpdatedDate = new Date('2025-09-30');
+
+let fpsMonitorActive = false;
+let lastFpsTime = performance.now();
+let frameCount = 0;
+
+function updateFpsMonitor() {
+    if (!fpsMonitorActive) return;
+    const now = performance.now();
+    frameCount++;
+    if (now - lastFpsTime >= 1000) {
+        document.getElementById('fps-monitor').textContent = `FPS: ${frameCount}`;
+        frameCount = 0;
+        lastFpsTime = now;
+    }
+    requestAnimationFrame(updateFpsMonitor);
+}
 
 const commands = {
     help: () => `
@@ -73,6 +85,7 @@ const commands = {
         <p><span class="highlight-secondary">fonts</span>          - Change the terminal font</p>
         <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
         <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
+        <p><span class="highlight-secondary">fps [on|off]</span>   - Toggles the FPS monitor</p>
         <p><span class="highlight-secondary">stop [process]</span> - Stop a process or component</p>
         <p><span class="highlight-secondary">software</span>       - View system software info and changelog</p>
         <p><span class="highlight-secondary">reset</span>          - Reset all user data</p>
@@ -194,7 +207,7 @@ const commands = {
         close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
         dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
     },
-    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString()}</p><br><p><strong>Orbit OS 4.0 Alpha 2 – Stability and Feature Expansion</strong></p><p style="color: var(--accent-secondary);">This update focuses on adding powerful new utilities and improving system stability, including a modern BIOS and error handling system.</p><br><p><strong>New 'notes' Command</strong></p><p style="color: var(--accent-secondary);">A persistent note-taking utility is now built-in. Use 'notes add', 'notes view', and 'notes delete' to manage your thoughts directly from the terminal.</p><br><p><strong>BIOS and BSOD Interface</strong></p><p style="color: var(--accent-secondary);">A new 'bios' command provides access to system functions like restarting and resetting data. Fatal errors now trigger a modern, clean 'Blue Screen of Death' that matches the OS aesthetic.</p><br><p><strong>Expanded Commands & UI Polish</strong></p><p style="color: var(--accent-secondary);">The 'weather' command now includes many more international cities. Hiding media players now correctly moves them to the corner of the screen. The 'setname' command now also updates the system hostname for better personalization.</p></div>`,
+    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString()}</p><br><p><strong>Orbit OS 4.0 Alpha 3 – Performance & UI Polish</strong></p><p style="color: var(--accent-secondary);">This update introduces a new performance utility and various quality-of-life improvements to enhance the user experience.</p><br><p><strong>New 'fps' Command</strong></p><p style="color: var(--accent-secondary);">A new performance monitor can be toggled using the 'fps' command. This displays a real-time Frames Per Second counter in the corner of the screen, perfect for monitoring UI performance.</p><br><p><strong>BIOS Safety & UI Fixes</strong></p><p style="color: var(--accent-secondary);">The BIOS 'Reset User Data' option now requires confirmation to prevent accidental data loss. Several UI bugs have been fixed, including the removal of the blue outline on button clicks and improved spacing for the command prompt.</p><br><p><strong>Improved Mobile Experience</strong></p><p style="color: var(--accent-secondary);">The terminal view now properly adjusts when the on-screen keyboard is opened on mobile devices, ensuring the command input area remains visible while typing.</p></div>`,
     browser: (args) => { const u = args.trim(); if (!u) return `<p>Usage: browser [url]</p>`; if (!u.startsWith('http')) return `<p class="error-message">Invalid URL. Please include http:// or https://</p>`; return `<p class="error-message">⚠️ Note: Not all websites support being loaded in a frame.</p><p>Loading ${u}...</p><div style="width:100%; height:600px; border: 1px solid var(--outline); margin-top: 10px; background-color: white; border-radius: 8px; overflow: hidden;"><iframe src="${u}" style="width:100%; height:100%; border:none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe></div>`; },
     rm: (args) => {
         if (args.trim() !== '-rf') return `<p>rm: missing operand</p>`;
@@ -240,7 +253,7 @@ const commands = {
         if (n.length > 15) return '<p class="error-message">Username too long (max 15 chars).</p>';
         config.username = n;
         setCookie('username', n, 365);
-        prompt.textContent = `${config.username}@${config.hostname}:~$ `;
+        prompt.textContent = `${config.username}@${config.hostname}:~$`;
         return `<p>Username changed to <span class="highlight">${n}</span>.</p>`;
     },
     sethost: (args) => {
@@ -249,7 +262,7 @@ const commands = {
         if (h.length > 15) return '<p class="error-message">Hostname too long (max 15 chars).</p>';
         config.hostname = h;
         setCookie('hostname', h, 365);
-        prompt.textContent = `${config.username}@${config.hostname}:~$ `;
+        prompt.textContent = `${config.username}@${config.hostname}:~$`;
         return `<p>Hostname changed to <span class="highlight">${h}</span>.</p>`;
     },
     weather: () => { const report = weatherData[Math.floor(Math.random() * weatherData.length)]; return `<p class="highlight">Weather:</p><p>${report.city}: ${report.temp}, ${report.desc}</p>`; },
@@ -259,41 +272,73 @@ const commands = {
         const biosScreen = document.getElementById('bios-screen');
         const biosContainer = biosScreen.querySelector('.bios-container');
 
-        biosContainer.innerHTML = `
-            <h1>ORBIT BIOS UTILITY</h1>
-            <div class="bios-menu">
-                <button class="bios-button" id="bios-restart">Restart System</button>
-                <button class="bios-button danger" id="bios-reset">Reset All User Data</button>
-                <button class="bios-button" id="bios-exit">Exit BIOS</button>
-            </div>`;
-
+        const showMainMenu = () => {
+            biosContainer.innerHTML = `
+                <h1>ORBIT BIOS UTILITY</h1>
+                <div class="bios-menu">
+                    <button class="bios-button" id="bios-restart">Restart System</button>
+                    <button class="bios-button danger" id="bios-reset">Reset All User Data</button>
+                    <button class="bios-button" id="bios-exit">Exit BIOS</button>
+                </div>`;
+            document.getElementById('bios-restart').onclick = () => {
+                biosContainer.innerHTML = '<h1>REBOOTING SYSTEM</h1><p>Please wait...</p>';
+                setTimeout(() => window.location.reload(), 1500);
+            };
+            document.getElementById('bios-reset').onclick = showResetConfirm;
+            document.getElementById('bios-exit').onclick = () => {
+                biosScreen.style.display = 'none';
+                document.querySelector('.terminal').style.display = 'flex';
+                document.getElementById('status-bar').style.display = 'flex';
+                inputField.disabled = false;
+                inputField.focus();
+            };
+        };
+        
+        const showResetConfirm = () => {
+            biosContainer.innerHTML = `
+                <h1>CONFIRMATION</h1>
+                <p style="margin-bottom: 2rem; color: var(--error);">This will erase all user data and cannot be undone.<br>Are you sure you want to continue?</p>
+                <div class="bios-menu" style="flex-direction: row; justify-content: center;">
+                    <button class="bios-button danger" id="bios-confirm-reset" style="width: 150px;">YES, RESET</button>
+                    <button class="bios-button" id="bios-cancel-reset" style="width: 150px;">NO, GO BACK</button>
+                </div>`;
+            document.getElementById('bios-confirm-reset').onclick = () => {
+                biosContainer.innerHTML = '<h1>RESETTING DATA</h1><p>All user data is being erased. The system will reboot shortly...</p>';
+                deleteCookie('username'); deleteCookie('hostname'); deleteCookie('font'); deleteCookie('lastLogin');
+                localStorage.removeItem('orbitos_notes');
+                setTimeout(() => window.location.reload(), 2500);
+            };
+            document.getElementById('bios-cancel-reset').onclick = showMainMenu;
+        };
+        
+        showMainMenu();
         biosScreen.style.display = 'flex';
-
-        document.getElementById('bios-restart').onclick = () => {
-            biosContainer.innerHTML = '<h1>REBOOTING SYSTEM</h1><p>Please wait...</p>';
-            setTimeout(() => window.location.reload(), 1500);
-        };
-
-        document.getElementById('bios-reset').onclick = () => {
-            biosContainer.innerHTML = '<h1>RESETTING DATA</h1><p>All user data is being erased. The system will reboot shortly...</p>';
-            deleteCookie('username');
-            deleteCookie('hostname');
-            deleteCookie('font');
-            deleteCookie('lastLogin');
-            localStorage.removeItem('orbitos_notes');
-            setTimeout(() => window.location.reload(), 2500);
-        };
-
-        document.getElementById('bios-exit').onclick = () => {
-            biosScreen.style.display = 'none';
-            document.querySelector('.terminal').style.display = 'flex';
-            document.getElementById('status-bar').style.display = 'flex';
-            inputField.disabled = false;
-            inputField.focus();
-        };
-
         inputField.disabled = true;
         return '';
+    },
+    fps: (args) => {
+        const monitor = document.getElementById('fps-monitor');
+        const action = args.trim().toLowerCase();
+
+        if (action === 'off') {
+            if (fpsMonitorActive) {
+                fpsMonitorActive = false;
+                monitor.style.display = 'none';
+                return '<p>FPS monitor disabled.</p>';
+            }
+            return '<p>FPS monitor is not active.</p>';
+        }
+
+        if (fpsMonitorActive) {
+            return '<p>FPS monitor is already active. Use "fps off" to disable.</p>';
+        }
+
+        monitor.style.display = 'block';
+        fpsMonitorActive = true;
+        lastFpsTime = performance.now();
+        frameCount = 0;
+        updateFpsMonitor();
+        return '<p>FPS monitor enabled.</p>';
     },
     notes: (args) => {
         const getNotes = () => JSON.parse(localStorage.getItem('orbitos_notes')) || [];
@@ -334,5 +379,4 @@ const commands = {
         }
     },
 };
-
 
