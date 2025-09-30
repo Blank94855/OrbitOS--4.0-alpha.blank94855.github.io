@@ -104,55 +104,64 @@ function updateFpsMonitor() {
 const commands = {
     help: (args) => {
         const page = args.trim();
-        if (page === '2') {
-            return `
-                <p><span class="highlight">Command List (Page 2/2)</span></p>
-                <br/>
-                <p class="highlight">--- [ Tools & Media ] ---</p>
-                <p><span class="highlight-secondary">notes</span>          - Manage your notes (add, view, delete, clear)</p>
-                <p><span class="highlight-secondary">browser [url]</span>  - Opens a URL in a frame</p>
-                <p><span class="highlight-secondary">calc [expr]</span>    - Calculate mathematical expression</p>
-                <p><span class="highlight-secondary">wiki [query]</span>   - Search Wikipedia and display summary</p>
-                <p><span class="highlight-secondary">tts [text]</span>     - Text to speech</p>
-                <p><span class="highlight-secondary">translate [lang] [text]</span> - Translate text</p>
-                <p><span class="highlight-secondary">weather</span>        - Shows weather information</p>
-                <p><span class="highlight-secondary">fortune</span>        - Get a random fortune message</p>
-                <p><span class="highlight-secondary">cowsay [text]</span>  - Display a cow saying your message</p>
-                <p><span class="highlight-secondary">hide [player]</span>  - Hides/shows the music or video player</p>
-                <p><span class="highlight-secondary">music</span>          - Opens the music player</p>
-                <p><span class="highlight-secondary">video</span>          - Opens the video player</p>
-            `;
-        } else {
-            return `
-                <p><span class="highlight">Command List (Page 1/2)</span></p>
-                <br/>
-                <p class="highlight">--- [ General ] ---</p>
-                <p><span class="highlight-secondary">help</span>           - Shows this help message</p>
-                <p><span class="highlight-secondary">clear</span>          - Clears the terminal screen</p>
-                <p><span class="highlight-secondary">echo [text]</span>    - Prints the specified text</p>
-                <p><span class="highlight-secondary">date</span>           - Shows current date and time</p>
-                <p><span class="highlight-secondary">history</span>        - Shows command history</p>
-                <br/>
-                <p class="highlight">--- [ System ] ---</p>
-                <p><span class="highlight-secondary">fastfetch</span>      - Displays detailed system information</p>
-                <p><span class="highlight-secondary">whoami</span>         - Shows current user and host</p>
-                <p><span class="highlight-secondary">setname [name]</span> - Set a custom username</p>
-                <p><span class="highlight-secondary">sethost [name]</span> - Set a custom hostname</p>
-                <p><span class="highlight-secondary">fonts</span>          - Change the terminal font</p>
-                <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
-                <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
-                <p><span class="highlight-secondary">fps [on|off]</span>   - Toggles the FPS monitor</p>
-                <p><span class="highlight-secondary">stop [process]</span> - Stop a process or component</p>
-                <p><span class="highlight-secondary">software</span>       - View system software info and changelog</p>
-                <p><span class="highlight-secondary">reset</span>          - Reset all user data</p>
-                <p><span class="highlight-secondary">bios</span>           - Enter the BIOS utility</p>
-                <p><span class="highlight-secondary">shutdown</span>       - Shutsdown OrbitOS</p>
-                <p><span class="highlight-secondary">reboot</span>         - Reboots OrbitOS</p>
-                <p><span class="highlight-secondary">restart</span>        - Reboots OrbitOS</p>
-                <p><span class="highlight-secondary">rm -rf</span>         - ...</p>
-                <br/>
-                <p>Type <span class="highlight">'help 2'</span> for more commands.</p>
-            `;
+        switch(page) {
+            case '2':
+                return `
+                    <p><span class="highlight">Command List (Page 2/3)</span></p>
+                    <br/>
+                    <p class="highlight">--- [ System ] ---</p>
+                    <p><span class="highlight-secondary">stop [process]</span> - Stop a process or component</p>
+                    <p><span class="highlight-secondary">software</span>       - View system software info and changelog</p>
+                    <p><span class="highlight-secondary">reset</span>          - Reset all user data</p>
+                    <p><span class="highlight-secondary">bios</span>           - Enter the BIOS utility</p>
+                    <p><span class="highlight-secondary">shutdown</span>       - Shutsdown OrbitOS</p>
+                    <p><span class="highlight-secondary">reboot</span>         - Reboots OrbitOS</p>
+                    <p><span class="highlight-secondary">restart</span>        - Reboots OrbitOS</p>
+                    <p><span class="highlight-secondary">rm -rf</span>         - ...</p>
+                    <br/>
+                    <p>Type <span class="highlight">'help 3'</span> for more commands.</p>
+                `;
+            case '3':
+                return `
+                    <p><span class="highlight">Command List (Page 3/3)</span></p>
+                    <br/>
+                    <p class="highlight">--- [ Tools & Media ] ---</p>
+                    <p><span class="highlight-secondary">notes</span>          - Manage your notes (add, view, delete, clear)</p>
+                    <p><span class="highlight-secondary">browser [url]</span>  - Opens a URL in a frame</p>
+                    <p><span class="highlight-secondary">calc [expr]</span>    - Calculate mathematical expression</p>
+                    <p><span class="highlight-secondary">wiki [query]</span>   - Search Wikipedia and display summary</p>
+                    <p><span class="highlight-secondary">tts [text]</span>     - Text to speech</p>
+                    <p><span class="highlight-secondary">translate [lang] [text]</span> - Translate text</p>
+                    <p><span class="highlight-secondary">weather</span>        - Shows weather information</p>
+                    <p><span class="highlight-secondary">fortune</span>        - Get a random fortune message</p>
+                    <p><span class="highlight-secondary">cowsay [text]</span>  - Display a cow saying your message</p>
+                    <p><span class="highlight-secondary">hide [player]</span>  - Hides/shows the music or video player</p>
+                    <p><span class="highlight-secondary">music</span>          - Opens the music player</p>
+                    <p><span class="highlight-secondary">video</span>          - Opens the video player</p>
+                `;
+            default:
+                return `
+                    <p><span class="highlight">Command List (Page 1/3)</span></p>
+                    <br/>
+                    <p class="highlight">--- [ General ] ---</p>
+                    <p><span class="highlight-secondary">help</span>           - Shows this help message</p>
+                    <p><span class="highlight-secondary">clear</span>          - Clears the terminal screen</p>
+                    <p><span class="highlight-secondary">echo [text]</span>    - Prints the specified text</p>
+                    <p><span class="highlight-secondary">date</span>           - Shows current date and time</p>
+                    <p><span class="highlight-secondary">history</span>        - Shows command history</p>
+                    <br/>
+                    <p class="highlight">--- [ System ] ---</p>
+                    <p><span class="highlight-secondary">fastfetch</span>      - Displays detailed system information</p>
+                    <p><span class="highlight-secondary">whoami</span>         - Shows current user and host</p>
+                    <p><span class="highlight-secondary">setname [name]</span> - Set a custom username</p>
+                    <p><span class="highlight-secondary">sethost [name]</span> - Set a custom hostname</p>
+                    <p><span class="highlight-secondary">fonts</span>          - Change the terminal font</p>
+                    <p><span class="highlight-secondary">battery</span>        - Shows battery status</p>
+                    <p><span class="highlight-secondary">processes</span>      - Lists running processes</p>
+                    <p><span class="highlight-secondary">fps [on|off]</span>   - Toggles the FPS monitor</p>
+                    <br/>
+                    <p>Type <span class="highlight">'help 2'</span> for more commands.</p>
+                `;
         }
     },
     fastfetch: () => {
