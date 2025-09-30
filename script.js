@@ -187,9 +187,26 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
     `;
     document.head.appendChild(style);
+    
+    if (getCookie('liteMode') === 'true') {
+        document.body.classList.add('lite-mode');
+        const liteStyle = document.createElement('style');
+        liteStyle.textContent = `
+            .lite-mode * {
+                transition: none !important;
+                animation: none !important;
+            }
+            .lite-mode [id*="-container"], .lite-mode .terminal {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                box-shadow: none !important;
+            }
+        `;
+        document.head.appendChild(liteStyle);
+    }
 
     loadSettings();
-    if (getCookie('fpsMonitor') === 'true') {
+    if (getCookie('fpsMonitor') === 'true' && !document.body.classList.contains('lite-mode')) {
         commands.fps('on');
     }
     updateLockScreenTime(); setInterval(updateLockScreenTime, 1000);
