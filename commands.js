@@ -14,24 +14,61 @@ function deleteCookie(name) {
 
 function dragElement(elmnt, headerId) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    let xOffset = 0, yOffset = 0;
+    let animationFrameId = null;
     const header = document.getElementById(headerId) || elmnt;
-    if (header) { header.onmousedown = dragMouseDown; header.style.cursor = 'grab'; }
+
+    // Attempt to parse existing translate values if any
+    const transform = getComputedStyle(elmnt).transform;
+    if (transform && transform !== 'none') {
+        const matrix = transform.match(/matrix.*\((.+)\)/);
+        if (matrix && matrix[1]) {
+            const parts = matrix[1].split(', ');
+            // Assuming the transform is of the form translate(x, y) or matrix(..., x, y)
+            if (parts.length === 6) { 
+                xOffset = parseFloat(parts[4]);
+                yOffset = parseFloat(parts[5]);
+            }
+        }
+    }
+    
+    if (header) {
+        header.onmousedown = dragMouseDown;
+        header.style.cursor = 'grab';
+    }
+
     function dragMouseDown(e) {
-        e = e || window.event; e.preventDefault();
-        pos3 = e.clientX; pos4 = e.clientY;
-        document.onmouseup = closeDragElement; document.onmousemove = elementDrag;
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
         if (header) header.style.cursor = 'grabbing';
         elmnt.style.transition = 'none';
     }
+
     function elementDrag(e) {
-        e = e || window.event; e.preventDefault();
-        pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-        pos3 = e.clientX; pos4 = e.clientY;
-        elmnt.style.top = `${elmnt.offsetTop - pos2}px`;
-        elmnt.style.left = `${elmnt.offsetLeft - pos1}px`;
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        xOffset -= pos1;
+        yOffset -= pos2;
+        
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = requestAnimationFrame(() => {
+            // Preserve the original centering transform by adding our translation
+            elmnt.style.transform = `translate(-50%, -50%) translate3d(${xOffset}px, ${yOffset}px, 0)`;
+        });
     }
+
     function closeDragElement() {
-        document.onmouseup = null; document.onmousemove = null;
+        document.onmouseup = null;
+        document.onmousemove = null;
         if (header) header.style.cursor = 'grab';
         elmnt.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
     }
@@ -217,20 +254,19 @@ const commands = {
         let totalTime = 0;
         const duration = 4000;
         const interval = 100;
-        const batchSize = 5;
+        const batchSize = 10; // Increased batch size
 
         const generateLines = () => {
             if (totalTime >= duration) {
                 triggerBSOD('CRITICAL_PROCESS_DIED');
                 return;
             }
-            let lineBatch = '';
-            for(let i=0; i<batchSize; i++){
-                 lineBatch += `<p class="error-message" style="margin:0;line-height:1.2;">rm: /sys/lib/${Math.random().toString(36).substring(2)}: Permission denied</p>`;
+            let lineBatchHTML = '';
+            for (let i = 0; i < batchSize; i++) {
+                lineBatchHTML += `<p class="error-message" style="margin:0;line-height:1.2;">rm: /sys/lib/${Math.random().toString(36).substring(2)}: Permission denied</p>`;
             }
-            const div = document.createElement('div');
-            div.innerHTML = lineBatch;
-            output.appendChild(div);
+            // Use insertAdjacentHTML for performant batch DOM insertion
+            output.insertAdjacentHTML('beforeend', lineBatchHTML);
 
             scrollToBottom();
             totalTime += interval;
@@ -396,5 +432,4 @@ const commands = {
         }
     },
 };
-
 
