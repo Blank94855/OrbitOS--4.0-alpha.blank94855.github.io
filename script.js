@@ -17,7 +17,7 @@ const config = {
     lastBootTime: new Date(),
     systemInfo: {
         os: 'OrbitOS',
-        version: '4.0. - alpha 3',
+        version: '4.0. - alpha 4',
         build: `20250930-${Math.floor(Math.random() * 900) + 100}`,
         kernel: '6.5.0-orbit'
     },
@@ -123,7 +123,7 @@ function applyFont(fontNumber) {
 async function executeCommand(input) {
     if (isSystemBricked) return '<p class="error-message">System halted. Please reboot.</p>';
     const trimmedInput = input.trim(); if (!trimmedInput) return '';
-    const [command, ...args] = trimmedInput.split(' ');
+    const [command, ...args] broadcasters = trimmedInput.split(' ');
     const lowerCaseCommand = command.toLowerCase();
     const commandFunction = commands[lowerCaseCommand] || (command === 'rm' && args[0] === '-rf' ? commands.rm : null);
 
@@ -161,10 +161,18 @@ async function displayResponse(input) {
     inputField.value = '';
 }
 
-function scrollToBottom() { setTimeout(() => { output.scrollTop = output.scrollHeight; }, 50); }
+function scrollToBottom() {
+    requestAnimationFrame(() => {
+        output.scrollTop = output.scrollHeight;
+    });
+}
+
 
 window.addEventListener('DOMContentLoaded', async () => {
     loadSettings();
+    if (getCookie('fpsMonitor') === 'true') {
+        commands.fps('on');
+    }
     updateLockScreenTime(); setInterval(updateLockScreenTime, 1000);
     dragElement(terminalElement, 'terminal-header');
 
@@ -202,4 +210,5 @@ inputField.addEventListener('focus', () => {
 });
 
 terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
+
 
