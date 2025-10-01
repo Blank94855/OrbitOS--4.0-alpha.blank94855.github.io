@@ -17,8 +17,8 @@ const config = {
     lastBootTime: new Date(), 
     systemInfo: { 
         os: 'OrbitOS', 
-        version: '4.0. - alpha 3',
-        build: `20250930-${Math.floor(Math.random() * 900) + 100}`,
+        version: '4.0. - alpha 4',
+        build: `20251001-${Math.floor(Math.random() * 900) + 100}`,
         kernel: '6.5.0-orbit'
     }, 
     batteryInfo: {}, 
@@ -48,6 +48,9 @@ function loadSettings() {
 
     const savedFont = getCookie('font');
     if (savedFont) applyFont(parseInt(savedFont));
+
+    const savedFontColor = getCookie('fontColor');
+    if (savedFontColor) applyFontColor(savedFontColor);
 }
 
 function simulateBootSequence() {
@@ -68,8 +71,14 @@ function simulateBootSequence() {
 
 function finalizeBootSequence() {
     const lastLogin = getCookie('lastLogin');
-    let welcomeMessage = `<p>Welcome to <span class="highlight">OrbitOS ${config.systemInfo.version}</span></p><p>Type 'help' for a list of commands</p>`;
+    const customWelcome = localStorage.getItem('orbitos_welcome_message');
+    
+    let welcomeMessage = customWelcome 
+        ? `<p>${customWelcome.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`
+        : `<p>Welcome to <span class="highlight">OrbitOS ${config.systemInfo.version}</span></p><p>Type 'help' for a list of commands</p>`;
+
     if (lastLogin) { welcomeMessage += `<p><br/>Last login: ${new Date(lastLogin).toLocaleString()}</p>`; }
+    
     setCookie('lastLogin', new Date().toISOString(), 365);
     output.innerHTML = welcomeMessage;
     inputField.disabled = false; prompt.style.display = 'inline-block';
@@ -199,4 +208,5 @@ inputField.addEventListener('keydown', (e) => {
 });
 
 terminalElement.addEventListener('click', (e) => { if (e.target.tagName !== 'A' && !isSystemBricked) { inputField.focus(); } });
+
 
