@@ -25,13 +25,16 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body { height: 100%; overflow: hidden; cursor: default; user-select: none; }
-        
+
         body {
             font-family: var(--font-main);
-            background: var(--background);
+            background-color: var(--background);
             color: var(--on-surface);
             display: flex; justify-content: center; align-items: center;
             background-image: radial-gradient(ellipse at top, #1f242c, #0d1117);
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
             overscroll-behavior-y: contain;
         }
 
@@ -276,4 +279,5 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
