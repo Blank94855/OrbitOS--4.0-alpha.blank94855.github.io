@@ -11,17 +11,17 @@ let commandHistory = [];
 let historyIndex = -1;
 
 const bootSequence = [ "Starting system...", "Loading kernel modules...", "Mounting /system...", "Starting ueventd...", "Starting servicemanager...", "Starting zygote...", "Boot completed." ];
-const config = { 
-    username: 'root', 
-    hostname: 'orbit', 
-    lastBootTime: new Date(), 
-    systemInfo: { 
-        os: 'OrbitOS', 
-        version: '4.0. - alpha 4',
-        build: `20251001-${Math.floor(Math.random() * 900) + 100}`,
+const config = {
+    username: 'root',
+    hostname: 'orbit',
+    lastBootTime: new Date(),
+    systemInfo: {
+        os: 'OrbitOS',
+        version: '4.0. - alpha 7',
+        build: `20251002-${Math.floor(Math.random() * 900) + 100}`,
         kernel: '6.5.0-orbit'
-    }, 
-    batteryInfo: {}, 
+    },
+    batteryInfo: {},
 };
 
 function triggerBSOD(errorCode) {
@@ -39,6 +39,13 @@ function setCookie(name, value, days) { let expires = ""; if (days) { const date
 function getCookie(name) { const nameEQ = name + "="; const ca = document.cookie.split(';'); for (let i = 0; i < ca.length; i++) { let c = ca[i]; while (c.charAt(0) == ' ') c = c.substring(1, c.length); if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length); } return null; }
 function deleteCookie(name) { document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;'; }
 
+function applyTheme(themeName) {
+    document.body.className = ''; 
+    if (themeName && themeName !== 'default') {
+        document.body.classList.add(`theme-${themeName}`);
+    }
+}
+
 function loadSettings() {
     const savedUser = getCookie('username');
     if (savedUser) config.username = savedUser;
@@ -51,6 +58,11 @@ function loadSettings() {
 
     const savedFontColor = getCookie('fontColor');
     if (savedFontColor) applyFontColor(savedFontColor);
+
+    const savedTheme = getCookie('theme');
+    if (savedTheme) {
+        applyTheme(savedTheme);
+    }
 }
 
 function simulateBootSequence() {
@@ -72,13 +84,13 @@ function simulateBootSequence() {
 function finalizeBootSequence() {
     const lastLogin = getCookie('lastLogin');
     const customWelcome = localStorage.getItem('orbitos_welcome_message');
-    
-    let welcomeMessage = customWelcome 
+
+    let welcomeMessage = customWelcome
         ? `<p>${customWelcome.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`
         : `<p>Welcome to <span class="highlight">OrbitOS ${config.systemInfo.version}</span></p><p>Type 'help' for a list of commands</p>`;
 
     if (lastLogin) { welcomeMessage += `<p><br/>Last login: ${new Date(lastLogin).toLocaleString()}</p>`; }
-    
+
     setCookie('lastLogin', new Date().toISOString(), 365);
     output.innerHTML = welcomeMessage;
     inputField.disabled = false; prompt.style.display = 'inline-block';
@@ -108,7 +120,7 @@ async function updateBatteryStatus() {
             const levelEl = document.getElementById('battery-level');
             const iconEl = document.getElementById('battery-icon');
             if (levelEl) levelEl.textContent = `${config.batteryInfo.level}%`;
-            if (battery.charging) { iconEl.innerHTML = `<path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" y1="13" x2="23" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline>`; } 
+            if (battery.charging) { iconEl.innerHTML = `<path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" y1="13" x2="23" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline>`; }
             else { iconEl.innerHTML = `<rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line>`; }
         };
         updateLevel();
@@ -120,13 +132,6 @@ function getUptime() {
     const diff = new Date() - config.lastBootTime;
     let minutes = Math.floor(diff / 60000); let hours = Math.floor(minutes / 60);
     return `${hours % 24}h ${minutes % 60}m`;
-}
-
-function applyFont(fontNumber) {
-    const fontMap = { 1: "'JetBrains Mono', monospace", 2: "'Fira Code', monospace", 3: "'Source Code Pro', monospace", 4: "'IBM Plex Mono', monospace", 5: "'Anonymous Pro', monospace", 6: "'Roboto Mono', monospace", 7: "'Space Mono', monospace", 8: "'Ubuntu Mono', monospace", 9: "'VT323', monospace", 10: "'Nanum Gothic Coding', monospace", 11: "'Cutive Mono', monospace", 12: "'Share Tech Mono', monospace", 13: "'Major Mono Display', monospace", 14: "'Nova Mono', monospace", 15: "'Syne Mono', monospace" };
-    const fontFamily = fontMap[fontNumber];
-    if (fontFamily) { terminalElement.style.fontFamily = fontFamily; return true; }
-    return false;
 }
 
 async function executeCommand(input) {
@@ -164,10 +169,10 @@ async function displayResponse(input) {
 
     if (loadingIndicator) loadingIndicator.remove();
 
-    if (response) { 
-        const responseDiv = document.createElement('div'); 
-        responseDiv.innerHTML = response; 
-        output.appendChild(responseDiv); 
+    if (response) {
+        const responseDiv = document.createElement('div');
+        responseDiv.innerHTML = response;
+        output.appendChild(responseDiv);
     }
     scrollToBottom();
     inputField.value = '';
@@ -182,10 +187,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     unlockButton.addEventListener('click', async () => {
         lockScreen.classList.add('hidden');
-        statusBar.style.display = 'flex'; terminalElement.style.display = 'flex';
+        statusBar.style.display = 'flex'; 
+        terminalElement.style.display = 'flex';
         updateStatusBar(); setInterval(updateStatusBar, 1000); updateBatteryStatus();
         await simulateBootSequence();
         finalizeBootSequence();
+        inputField.focus();
     });
 });
 
