@@ -69,7 +69,7 @@ const commands = {
                     <p><span class="highlight-secondary">bios</span>             - Enter the BIOS utility</p>
                     <p><span class="highlight-secondary">shutdown</span>         - Shutsdown OrbitOS</p>
                     <p><span class="highlight-secondary">reboot</span>           - Reboots OrbitOS</p>
-                    <p><span class="highlight-secondary">rm -rf</span>           - ...</p>
+                    <p><span class="highlight-secondary">rm</span>           - ...</p>
                     <br/>
                     <p>Type <span class="highlight">'help 3'</span> for more commands.</p>
                 `;
@@ -129,7 +129,7 @@ const commands = {
             setCookie('theme', selectedTheme.id, 365);
             return `<p>Theme changed to ${selectedTheme.name}.</p>`;
         }
-        
+
         let output = '<p>Available themes:</p>';
         for (const [key, value] of Object.entries(themeMap)) {
             output += `<p style="display: flex; gap: 1ch;"><span>${key}.</span><span>${value.name}${key == 1 ? ' (Default)' : ''}</span></p>`;
@@ -138,42 +138,38 @@ const commands = {
         return output;
     },
     logs: () => {
-        const logLevels = [
-            { level: 'INFO', color: 'var(--on-surface)' },
-            { level: 'WARN', color: 'var(--accent-secondary)' },
-            { level: 'ERROR', color: 'var(--error)' }
-        ];
-        const logMessages = [
-            "Initializing kernel...",
-            "Loading user profile...",
-            "Network interface eth0 connected.",
-            "Service 'audiomanager' started.",
-            "Checking for software updates...",
-            "No new updates found.",
-            "User 'root' logged in.",
-            "CPU temperature spikes detected.",
-            "Memory usage at 85%.",
-            "Failed to load module 'optional_driver.ko'.",
-            "Authentication service timed out.",
-            "System time synchronized with ntp.orbit.os.",
-            "Starting cron daemon...",
-            "Disk space on / is running low.",
-            "Permission denied for process 4123.",
-            "UI compositor successfully loaded."
-        ];
-
+        const logLevels = [ { level: 'INFO', color: 'var(--on-surface)' }, { level: 'WARN', color: 'var(--accent-secondary)' }, { level: 'ERROR', color: 'var(--error)' } ];
+        const logTemplates = {
+            INFO: [ "System boot initiated.", "Kernel v6.1.5-orbit loaded successfully.", "Service '{service}' started.", "User '{user}' authenticated successfully.", "Filesystem check on /dev/sda1 completed without errors.", "UI compositor 'window-manager' loaded.", "System time synchronized with ntp.orbit.os.", "Bluetooth adapter found: BCM20702A0." ],
+            WARN: [ "High CPU temperature detected: {temp}°C.", "Low disk space on /var/log. {usage}% used.", "Connection to update server 'pkg.orbit.os' is unstable.", "Network interface eth0: DHCP lease renewal failed, will retry.", "Process '{process}' is using excessive memory.", "Deprecated configuration file found at /etc/sys.conf.old." ],
+            ERROR: [ "Failed to mount /dev/sdb1: No such device.", "Authentication failed for user '{user}'.", "Service '{service}' crashed with signal 11 (SIGSEGV).", "Failed to start {service}. See 'journalctl -u {service}'.", "Unhandled exception in 'terminal.js': TypeError: cannot read property 'length' of undefined." ]
+        };
+        const placeholders = {
+            service: ['network-manager', 'audio-daemon', 'cron', 'udevd', 'bluetoothd'],
+            user: [config.username, 'root', 'guest'],
+            process: ['media-scanner', 'backup-client', 'updater'],
+            temp: () => Math.floor(Math.random() * 15) + 75,
+            usage: () => Math.floor(Math.random() * 10) + 90
+        };
+        const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
         let output = '<p class="highlight">System Logs:</p>';
         const now = new Date();
-
-        for (let i = 0; i < 10; i++) {
-            const randomLog = logMessages[Math.floor(Math.random() * logMessages.length)];
-            const randomLevel = logLevels[Math.floor(Math.random() * logLevels.length)];
-            const logTime = new Date(now.getTime() - Math.random() * 60000 * 5); // Logs from the last 5 minutes
+        for (let i = 0; i < 12; i++) {
+            const randomLevelInfo = getRandom(logLevels);
+            const level = randomLevelInfo.level;
+            let logMessage = getRandom(logTemplates[level]);
+            logMessage = logMessage.replace(/{(\w+)}/g, (match, placeholder) => {
+                if (placeholders[placeholder]) {
+                    const replacer = placeholders[placeholder];
+                    return typeof replacer === 'function' ? replacer() : getRandom(replacer);
+                }
+                return match;
+            });
+            const pid = Math.floor(Math.random() * 8000) + 1000;
+            const logTime = new Date(now.getTime() - Math.random() * 60000 * 10);
             const timeString = logTime.toLocaleTimeString([], { hour12: false });
-            
-            output += `<p><span style="color: var(--accent-primary);">${timeString}</span> [<span style="color: ${randomLevel.color}; font-weight: 500;">${randomLevel.level}</span>] ${randomLog}</p>`;
+            output += `<p><span style="color: var(--accent-primary);">${timeString}</span> [<span style="color: ${randomLevelInfo.color}; font-weight: 500;">${level.padEnd(5)}</span>] [PID:${pid}] ${logMessage}</p>`;
         }
-
         return output;
     },
     fastfetch: () => {
@@ -275,7 +271,7 @@ const commands = {
         close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
         dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
     },
-    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p><br><p><strong>New Features</strong></p><p style="color: var(--accent-secondary);">- Added 15 brand-new color schemes to the 'themes' command, bringing the total number of available themes to 15. This update gives you even more options to customize and personalize your terminal experience exactly the way you like it, letting you choose from a wider range of styles, colors, and vibes so your terminal feels truly your own every time you use it</p><p style="color: var(--accent-secondary);">- Added the 'logs' command to display simulated system activity.</p></div>`,
+    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p><br><p><strong>New Features</strong></p><p style="color: var(--accent-secondary);">- Added 15 brand-new color schemes to the 'themes' command, bringing the total number of available themes to 15. This update gives you even more options to customize and personalize your terminal experience exactly the way you like it, letting you choose from a wider range of styles, colors, and vibes so your terminal feels truly your own every time you use it</p><p style="color: var(--accent-secondary);">- Added the 'logs' command to display dynamic system activity.</p></div>`,
     browser: (args) => { const u = args.trim(); if (!u) return `<p>Usage: browser [url]</p>`; if (!u.startsWith('http')) return `<p class="error-message">Invalid URL. Please include http:// or https://</p>`; return `<p class="error-message">⚠️ Note: Not all websites support being loaded in a frame.</p><p>Loading ${u}...</p><div style="width:100%; height:600px; border: 1px solid var(--outline); margin-top: 10px; background-color: white; border-radius: 8px; overflow: hidden;"><iframe src="${u}" style="width:100%; height:100%; border:none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe></div>`; },
     rm: (args) => {
         if (args.trim() !== '-rf') return `<p>rm: missing operand</p>`;
@@ -502,5 +498,4 @@ const commands = {
         }
     }
 };
-
 
