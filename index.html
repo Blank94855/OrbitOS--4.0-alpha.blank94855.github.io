@@ -10,7 +10,7 @@
     <style>
         :root {
             --background: #0d1117;
-            --surface: rgba(22, 27, 34, 0.7);
+            --surface: rgba(22, 27, 34, 0.85);
             --outline: #30363d;
             --glow: rgba(139, 148, 158, 0.2);
             --on-surface: #c9d1d9;
@@ -22,6 +22,90 @@
             --font-mono: 'JetBrains Mono', monospace;
         }
 
+        body.theme-solar-flare {
+            --background: #fdf6e3; --surface: rgba(253, 246, 227, 0.85); --outline: #93a1a1;
+            --glow: rgba(0, 0, 0, 0.1); --on-surface: #586e75; --accent-primary: #268bd2;
+            --accent-secondary: #859900; --error: #dc322f; --success: #859900;
+        }
+        
+        body.theme-nebula {
+            --background: #241b2f; --surface: rgba(23, 17, 35, 0.85); --outline: #4a3b5a;
+            --glow: rgba(255, 107, 222, 0.15); --on-surface: #e0dce5; --accent-primary: #ff6bde;
+            --accent-secondary: #a992e5; --error: #ff476c; --success: #62e08c;
+        }
+
+        body.theme-matrix {
+            --background: #000000; --surface: rgba(10, 10, 10, 0.85); --outline: #003B00;
+            --glow: rgba(0, 255, 0, 0.15); --on-surface: #00ff00; --accent-primary: #33ff33;
+            --accent-secondary: #00cc00; --error: #990000; --success: #00ff00;
+        }
+
+        body.theme-arctic {
+            --background: #f0f4f8; --surface: rgba(255, 255, 255, 0.85); --outline: #d3dde6;
+            --glow: rgba(74, 144, 226, 0.1); --on-surface: #243b53; --accent-primary: #4a90e2;
+            --accent-secondary: #3b71b1; --error: #d0021b; --success: #1e9a51;
+        }
+
+        body.theme-cyberpunk {
+            --background: #0a041a; --surface: rgba(10, 4, 26, 0.85); --outline: #2a1a4a;
+            --glow: rgba(255, 0, 255, 0.2); --on-surface: #ebe0ff; --accent-primary: #ff00ff;
+            --accent-secondary: #00ffff; --error: #ff3333; --success: #33ff33;
+        }
+
+        body.theme-oceanic {
+            --background: #0b2d48; --surface: rgba(11, 45, 72, 0.85); --outline: #1a5078;
+            --glow: rgba(67, 188, 205, 0.2); --on-surface: #c4dce9; --accent-primary: #43bccd;
+            --accent-secondary: #f0e6d2; --error: #e57373; --success: #81c784;
+        }
+
+        body.theme-forest {
+            --background: #1e2d2b; --surface: rgba(30, 45, 43, 0.85); --outline: #38514e;
+            --glow: rgba(121, 186, 156, 0.15); --on-surface: #c2d1ce; --accent-primary: #79ba9c;
+            --accent-secondary: #a88d78; --error: #c97b7b; --success: #a3c293;
+        }
+
+        body.theme-sunset {
+            --background: #2c1338; --surface: rgba(44, 19, 56, 0.85); --outline: #5a2a72;
+            --glow: rgba(255, 118, 99, 0.2); --on-surface: #f5e4f9; --accent-primary: #ff7663;
+            --accent-secondary: #d664be; --error: #ff4a4a; --success: #a0ff99;
+        }
+
+        body.theme-monokai {
+            --background: #272822; --surface: rgba(39, 40, 34, 0.85); --outline: #49483e;
+            --glow: rgba(249, 38, 114, 0.15); --on-surface: #f8f8f2; --accent-primary: #f92672;
+            --accent-secondary: #a6e22e; --error: #f92672; --success: #a6e22e;
+        }
+
+        body.theme-dracula {
+            --background: #282a36; --surface: rgba(40, 42, 54, 0.85); --outline: #44475a;
+            --glow: rgba(189, 147, 249, 0.15); --on-surface: #f8f8f2; --accent-primary: #bd93f9;
+            --accent-secondary: #50fa7b; --error: #ff5555; --success: #50fa7b;
+        }
+
+        body.theme-nord {
+            --background: #2e3440; --surface: rgba(46, 52, 64, 0.85); --outline: #4c566a;
+            --glow: rgba(129, 161, 193, 0.1); --on-surface: #d8dee9; --accent-primary: #81a1c1;
+            --accent-secondary: #88c0d0; --error: #bf616a; --success: #a3be8c;
+        }
+
+        body.theme-gruvbox {
+            --background: #282828; --surface: rgba(40, 40, 40, 0.85); --outline: #504945;
+            --glow: rgba(254, 128, 25, 0.1); --on-surface: #ebdbb2; --accent-primary: #fe8019;
+            --accent-secondary: #b8bb26; --error: #cc241d; --success: #98971a;
+        }
+        
+        body.theme-crimson {
+            --background: #1a0000; --surface: rgba(26, 0, 0, 0.85); --outline: #5c0000;
+            --glow: rgba(255, 20, 20, 0.2); --on-surface: #f2dcdc; --accent-primary: #ff1414;
+            --accent-secondary: #a0a0a0; --error: #ff5050; --success: #cccccc;
+        }
+
+        body.theme-gold {
+            --background: #14120E; --surface: rgba(20, 18, 14, 0.85); --outline: #4d4432;
+            --glow: rgba(212, 175, 55, 0.15); --on-surface: #fff8e1; --accent-primary: #d4af37;
+            --accent-secondary: #ffffff; --error: #e68e8e; --success: #b0e0b0;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body { height: 100%; overflow: hidden; cursor: default; user-select: none; }
@@ -31,11 +115,12 @@
             background-color: var(--background);
             color: var(--on-surface);
             display: flex; justify-content: center; align-items: center;
-            background-image: radial-gradient(ellipse at top, #1f242c, #0d1117);
+            background-image: radial-gradient(ellipse at top, color-mix(in srgb, var(--background) 80%, black), var(--background));
             background-size: cover;
             background-position: center center;
             background-attachment: fixed;
             overscroll-behavior-y: contain;
+            transition: background-color 0.5s ease;
         }
 
         button, input {
@@ -81,25 +166,35 @@
         .terminal {
             width: 100%; max-width: 900px; height: 100%; max-height: 85vh;
             background-color: var(--surface);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px);
             border-radius: 12px;
             box-shadow: 0 10px 50px var(--glow), 0 0 0 1px var(--outline);
             border: 1px solid var(--outline); font-family: var(--font-mono);
             display: flex; flex-direction: column; opacity: 0; transform: translateY(20px);
             animation: fadeIn 0.8s 0.7s ease-out forwards;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s ease;
+            overflow: hidden;
         }
 
         .terminal-header {
-            background-color: rgba(22, 27, 34, 0.5);
+            background-color: rgba(30, 35, 42, 0.7);
             padding: 0.75rem 1rem; display: flex; align-items: center;
             border-bottom: 1px solid var(--outline); flex-shrink: 0; cursor: grab;
+            transition: background-color 0.5s ease;
         }
         .terminal-header:active { cursor: grabbing; }
 
         .terminal-title { color: var(--on-surface); font-size: 0.9rem; font-weight: 500; margin-left: 0.5rem; }
-        .terminal-controls { display: flex; gap: 0.5rem; margin-right: 1rem; }
-        .control-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-controls { display: flex; gap: 0.75rem; margin-right: 1rem; align-items: center; }
+        .control-dot {
+            width: 16px; height: 16px; border-radius: 50%;
+            transition: transform 0.2s ease-out, filter 0.2s ease-out;
+            cursor: pointer;
+        }
+        .control-dot:hover {
+            transform: scale(1.15);
+            filter: brightness(1.2);
+        }
         .control-dot:nth-child(1) { background-color: #ff5f56; } .control-dot:nth-child(2) { background-color: #ffbd2e; } .control-dot:nth-child(3) { background-color: #27c93f; }
 
         .output { padding: 1.5rem; flex-grow: 1; overflow-y: auto; line-height: 1.7; font-size: 0.9rem; user-select: text; }
@@ -109,7 +204,7 @@
         .highlight-secondary { color: var(--accent-secondary); }
         .error-message { color: var(--error); }
 
-        .command { display: flex; align-items: center; padding: 1rem 1.5rem; background-color: rgba(22, 27, 34, 0.5); border-top: 1px solid var(--outline); flex-shrink: 0; }
+        .command { display: flex; align-items: center; padding: 1rem 1.5rem; background-color: rgba(30, 35, 42, 0.7); border-top: 1px solid var(--outline); flex-shrink: 0; transition: background-color 0.5s ease;}
         #prompt { margin-right: 0.5rem; }
         .input-field { background-color: transparent; border: none; color: var(--on-surface); font-size: 0.9rem; width: 100%; outline: none; font-family: inherit; user-select: text; }
         .input-field:focus { caret-color: var(--accent-primary); }
