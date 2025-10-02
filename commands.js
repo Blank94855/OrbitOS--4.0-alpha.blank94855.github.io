@@ -1,3 +1,10 @@
+function applyFont(fontNumber) {
+    const fontMap = { 1: "'JetBrains Mono', monospace", 2: "'Fira Code', monospace", 3: "'Source Code Pro', monospace", 4: "'IBM Plex Mono', monospace", 5: "'Anonymous Pro', monospace", 6: "'Roboto Mono', monospace", 7: "'Space Mono', monospace", 8: "'Ubuntu Mono', monospace", 9: "'VT323', monospace", 10: "'Nanum Gothic Coding', monospace", 11: "'Cutive Mono', monospace", 12: "'Share Tech Mono', monospace", 13: "'Major Mono Display', monospace", 14: "'Nova Mono', monospace", 15: "'Syne Mono', monospace" };
+    const fontFamily = fontMap[fontNumber];
+    if (fontFamily) { document.querySelector('.terminal').style.fontFamily = fontFamily; return true; }
+    return false;
+}
+
 function applyFontColor(color) {
     if (color) {
         document.documentElement.style.setProperty('--on-surface', color);
@@ -6,30 +13,16 @@ function applyFontColor(color) {
     }
 }
 
-function setCookie(name, value, days) {
-    let expires = "";
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
-}
-
-function deleteCookie(name) {
-    document.cookie = name + '=; Max-Age=-99999999; path=/; SameSite=Lax';
-}
-
 function dragElement(elmnt, headerId) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     const header = document.getElementById(headerId) || elmnt;
     if (header) { header.onmousedown = dragMouseDown; header.style.cursor = 'grab'; }
     function dragMouseDown(e) { e = e || window.event; e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; if (header) header.style.cursor = 'grabbing'; elmnt.style.transition = 'none'; }
     function elementDrag(e) { e = e || window.event; e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; elmnt.style.top = `${elmnt.offsetTop - pos2}px`; elmnt.style.left = `${elmnt.offsetLeft - pos1}px`; }
-    function closeDragElement() { document.onmouseup = null; document.onmousemove = null; if (header) header.style.cursor = 'grab'; elmnt.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease'; }
+    function closeDragElement() { document.onmouseup = null; document.onmousemove = null; if (header) header.style.cursor = 'grab'; elmnt.style.transition = 'opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease'; }
 }
 
-const lastUpdatedDate = new Date('2025-10-01');
+const lastUpdatedDate = new Date('2025-10-02');
 
 let guessTheNumberGame = {
     isActive: false,
@@ -57,6 +50,7 @@ const commands = {
                     <p><span class="highlight-secondary">sethost [name]</span>   - Set a custom hostname</p>
                     <p><span class="highlight-secondary">fonts</span>            - Change the terminal font</p>
                     <p><span class="highlight-secondary">fontcolor</span>        - Change the terminal font color</p>
+                    <p><span class="highlight-secondary">themes</span>           - Change the terminal color scheme</p>
                     <p><span class="highlight-secondary">welcomemsg</span>       - Set a custom welcome message</p>
                     <br/>
                     <p>Type <span class="highlight">'help 2'</span> or <span class="highlight">'help 3'</span> for more commands.</p>
@@ -67,6 +61,7 @@ const commands = {
                     <p class="highlight">--- [ System ] ---</p>
                     <p><span class="highlight-secondary">fastfetch</span>        - Displays detailed system information</p>
                     <p><span class="highlight-secondary">software</span>         - View system software info and changelog</p>
+                    <p><span class="highlight-secondary">logs</span>             - View recent system logs</p>
                     <p><span class="highlight-secondary">battery</span>          - Shows battery status</p>
                     <p><span class="highlight-secondary">processes</span>        - Lists running processes</p>
                     <p><span class="highlight-secondary">stop [process]</span>   - Stop a process or component</p>
@@ -101,6 +96,86 @@ const commands = {
         }
         return output;
     },
+     themes: (args) => {
+        const themeMap = {
+            1: { name: 'Orbit', id: 'default' },
+            2: { name: 'Solar Flare', id: 'solar-flare' },
+            3: { name: 'Nebula', id: 'nebula' },
+            4: { name: 'Matrix', id: 'matrix' },
+            5: { name: 'Arctic', id: 'arctic' },
+            6: { name: 'Cyberpunk', id: 'cyberpunk' },
+            7: { name: 'Oceanic', id: 'oceanic' },
+            8: { name: 'Forest', id: 'forest' },
+            9: { name: 'Sunset', id: 'sunset' },
+            10: { name: 'Monokai', id: 'monokai' },
+            11: { name: 'Dracula', id: 'dracula' },
+            12: { name: 'Nord', id: 'nord' },
+            13: { name: 'Gruvbox', id: 'gruvbox' },
+            14: { name: 'Crimson', id: 'crimson' },
+            15: { name: 'Gold', id: 'gold' }
+        };
+        const input = args.trim().toLowerCase();
+
+        if (input === 'reset') {
+            applyTheme('default');
+            deleteCookie('theme');
+            return `<p>Theme reset to Orbit (Default).</p>`;
+        }
+
+        const num = parseInt(input);
+        if (!isNaN(num) && num >= 1 && num <= Object.keys(themeMap).length) {
+            const selectedTheme = themeMap[num];
+            applyTheme(selectedTheme.id);
+            setCookie('theme', selectedTheme.id, 365);
+            return `<p>Theme changed to ${selectedTheme.name}.</p>`;
+        }
+        
+        let output = '<p>Available themes:</p>';
+        for (const [key, value] of Object.entries(themeMap)) {
+            output += `<p style="display: flex; gap: 1ch;"><span>${key}.</span><span>${value.name}${key == 1 ? ' (Default)' : ''}</span></p>`;
+        }
+        output += `<p><br/>Usage: themes [number] or themes reset</p>`;
+        return output;
+    },
+    logs: () => {
+        const logLevels = [
+            { level: 'INFO', color: 'var(--on-surface)' },
+            { level: 'WARN', color: 'var(--accent-secondary)' },
+            { level: 'ERROR', color: 'var(--error)' }
+        ];
+        const logMessages = [
+            "Initializing kernel...",
+            "Loading user profile...",
+            "Network interface eth0 connected.",
+            "Service 'audiomanager' started.",
+            "Checking for software updates...",
+            "No new updates found.",
+            "User 'root' logged in.",
+            "CPU temperature spikes detected.",
+            "Memory usage at 85%.",
+            "Failed to load module 'optional_driver.ko'.",
+            "Authentication service timed out.",
+            "System time synchronized with ntp.orbit.os.",
+            "Starting cron daemon...",
+            "Disk space on / is running low.",
+            "Permission denied for process 4123.",
+            "UI compositor successfully loaded."
+        ];
+
+        let output = '<p class="highlight">System Logs:</p>';
+        const now = new Date();
+
+        for (let i = 0; i < 10; i++) {
+            const randomLog = logMessages[Math.floor(Math.random() * logMessages.length)];
+            const randomLevel = logLevels[Math.floor(Math.random() * logLevels.length)];
+            const logTime = new Date(now.getTime() - Math.random() * 60000 * 5); // Logs from the last 5 minutes
+            const timeString = logTime.toLocaleTimeString([], { hour12: false });
+            
+            output += `<p><span style="color: var(--accent-primary);">${timeString}</span> [<span style="color: ${randomLevel.color}; font-weight: 500;">${randomLevel.level}</span>] ${randomLog}</p>`;
+        }
+
+        return output;
+    },
     fastfetch: () => {
         if (document.getElementById('fastfetch-container')) { document.getElementById('fastfetch-container').remove(); }
         const ffContainer = document.createElement('div');
@@ -108,7 +183,8 @@ const commands = {
         ffContainer.style.cssText = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 650px; max-width: 90vw;
-            background: var(--surface); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            background: var(--surface);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--outline); border-radius: 12px;
             box-shadow: 0 10px 50px var(--glow);
             z-index: 1000; color: var(--on-surface); font-family: 'Inter', sans-serif;
@@ -118,7 +194,7 @@ const commands = {
         ffContainer.innerHTML = `
             <div id="fastfetch-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline);">
                 <span style="font-weight: 500; color: var(--on-surface);">System Information</span>
-                <button id="close-fastfetch" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button>
+                <button id="close-fastfetch" style="background: #ff5f56; border: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease;" onmouseover="this.style.transform='scale(1.15)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"></button>
             </div>
             <div style="display: flex; padding: 20px; gap: 20px;">
                 <pre style="color: var(--accent-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-top: -10px;">
@@ -168,8 +244,8 @@ const commands = {
     video: () => {
         if (document.getElementById('video-player-container')) return '<p class="error-message">Video player is already running.</p>';
         const playerContainer = document.createElement('div'); playerContainer.id = 'video-player-container';
-        playerContainer.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; max-width: 90vw; background: var(--surface); backdrop-filter: blur(15px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; animation: fadeIn 0.3s ease;`;
-        playerContainer.innerHTML = `<div id="video-player-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline);"><span id="video-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px; font-size: 0.9em; font-weight: 500; color: var(--on-surface);">No video loaded</span><div style="display: flex; align-items: center; gap: 8px;"><button id="hide-video-player" style="background: #ffbd2e; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; display:flex; justify-content:center; align-items:center; color: #995700; font-weight: bold; line-height:14px;">–</button><button id="close-video-player" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button></div></div><div id="video-player-body"><div style="width: 100%; background-color: black; border-radius: 0 0 11px 11px; overflow: hidden;"><video id="video-element" style="width: 100%; display: block;"></video></div><div style="padding: 12px 16px;"><input type="range" id="video-seek-bar" value="0" style="width: 100%; margin: 8px 0; accent-color: var(--accent-primary);"><div id="video-controls" style="display: flex; justify-content: center; align-items:center; gap: 15px;"><button id="video-play-pause-btn" style="background: transparent; border: none; color: white; cursor: pointer; opacity: 0.8; transition: opacity 0.2s ease, transform 0.2s ease;"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div></div></div>`;
+        playerContainer.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; max-width: 90vw; background: var(--surface); backdrop-filter: blur(20px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; animation: fadeIn 0.3s ease;`;
+        playerContainer.innerHTML = `<div id="video-player-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline);"><span id="video-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px; font-size: 0.9em; font-weight: 500; color: var(--on-surface);">No video loaded</span><div style="display: flex; align-items: center; gap: 0.75rem;"><button id="hide-video-player" style="background: #ffbd2e; border: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; display:flex; justify-content:center; align-items:center; color: #995700; font-weight: bold; line-height:16px; transition: transform 0.2s ease, filter 0.2s ease;" onmouseover="this.style.transform='scale(1.15)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';">–</button><button id="close-video-player" style="background: #ff5f56; border: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease;" onmouseover="this.style.transform='scale(1.15)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"></button></div></div><div id="video-player-body"><div style="width: 100%; background-color: black; border-radius: 0 0 11px 11px; overflow: hidden;"><video id="video-element" style="width: 100%; display: block;"></video></div><div style="padding: 12px 16px;"><input type="range" id="video-seek-bar" value="0" style="width: 100%; margin: 8px 0; accent-color: var(--accent-primary);"><div id="video-controls" style="display: flex; justify-content: center; align-items:center; gap: 15px;"><button id="video-play-pause-btn" style="background: transparent; border: none; color: white; cursor: pointer; opacity: 0.8; transition: opacity 0.2s ease, transform 0.2s ease;"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div></div></div>`;
         document.body.appendChild(playerContainer);
         const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.mp4'; fileInput.style.display = 'none'; document.body.appendChild(fileInput); fileInput.click();
         const video = document.getElementById('video-element'), playBtn = document.getElementById('video-play-pause-btn'), seek = document.getElementById('video-seek-bar'), title = document.getElementById('video-title'), close = document.getElementById('close-video-player'), hideBtn = document.getElementById('hide-video-player'), playerBody = document.getElementById('video-player-body');
@@ -185,8 +261,8 @@ const commands = {
     music: () => {
         if (document.getElementById('music-player-container')) return '<p class="error-message">Music player is already running.</p>';
         const playerContainer = document.createElement('div'); playerContainer.id = 'music-player-container';
-        playerContainer.style.cssText = `position: fixed; top: 60%; left: 50%; transform: translate(-50%, -50%); width: 350px; background: var(--surface); backdrop-filter: blur(15px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; animation: fadeIn 0.3s ease;`;
-        playerContainer.innerHTML = `<div id="music-player-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px;"><span style="font-weight: 500; color: var(--on-surface);">Music Player</span><div style="display:flex; align-items:center; gap: 8px;"><button id="hide-music-player" style="background: #ffbd2e; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; display:flex; justify-content:center; align-items:center; color: #995700; font-weight: bold; line-height:14px;">–</button><button id="close-music-player" style="background: #ff5f56; border: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer;"></button></div></div><div id="music-player-body" style="padding: 0 15px 15px;"><div style="text-align: center; padding-top: 5px;"><span id="song-title" style="display: block; margin-bottom: 10px; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No song loaded</span><audio id="audio-player"></audio><input type="range" id="seek-bar" value="0" style="width: 100%; margin-bottom: 15px; accent-color: var(--accent-secondary);"></div><div id="music-controls" style="display: flex; justify-content: center; align-items: center; gap: 20px;"><button id="play-pause-btn" style="background: var(--accent-secondary); color: var(--background); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease;"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div></div>`;
+        playerContainer.style.cssText = `position: fixed; top: 60%; left: 50%; transform: translate(-50%, -50%); width: 350px; background: var(--surface); backdrop-filter: blur(20px); border: 1px solid var(--outline); border-radius: 12px; box-shadow: 0 10px 50px var(--glow); z-index: 1000; color: #e0e0e0; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; animation: fadeIn 0.3s ease;`;
+        playerContainer.innerHTML = `<div id="music-player-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px;"><span style="font-weight: 500; color: var(--on-surface);">Music Player</span><div style="display:flex; align-items:center; gap: 0.75rem;"><button id="hide-music-player" style="background: #ffbd2e; border: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; display:flex; justify-content:center; align-items:center; color: #995700; font-weight: bold; line-height:16px; transition: transform 0.2s ease, filter 0.2s ease;" onmouseover="this.style.transform='scale(1.15)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';">–</button><button id="close-music-player" style="background: #ff5f56; border: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease;" onmouseover="this.style.transform='scale(1.15)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"></button></div></div><div id="music-player-body" style="padding: 0 15px 15px;"><div style="text-align: center; padding-top: 5px;"><span id="song-title" style="display: block; margin-bottom: 10px; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No song loaded</span><audio id="audio-player"></audio><input type="range" id="seek-bar" value="0" style="width: 100%; margin-bottom: 15px; accent-color: var(--accent-secondary);"></div><div id="music-controls" style="display: flex; justify-content: center; align-items: center; gap: 20px;"><button id="play-pause-btn" style="background: var(--accent-secondary); color: var(--background); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease;"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div></div>`;
         document.body.appendChild(playerContainer);
         const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = '.mp3'; fileInput.style.display = 'none'; document.body.appendChild(fileInput); fileInput.click();
         const audio = document.getElementById('audio-player'), playBtn = document.getElementById('play-pause-btn'), seek = document.getElementById('seek-bar'), title = document.getElementById('song-title'), close = document.getElementById('close-music-player'), hideBtn = document.getElementById('hide-music-player'), playerBody = document.getElementById('music-player-body');
@@ -199,7 +275,7 @@ const commands = {
         close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
         dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
     },
-    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString()}</p><br><p><strong>Orbit OS 4.0 Alpha 4 – Utilities & Games Update</strong></p><p style="color: var(--accent-secondary);">This update adds several new command-line tools and games, along with more personalization options for the user experience.</p><br><p><strong>New Games & Tools</strong></p><p style="color: var(--accent-secondary);">Challenge yourself with the 'guess' number game or generate secure passwords with the 'passgen' command, right from the terminal.</p><br><p><strong>Custom Welcome Message</strong></p><p style="color: var(--accent-secondary);">Personalize your boot-up sequence by setting a custom welcome message with the new 'welcomemsg' command. Your message is saved and will greet you every time you start the OS.</p></div>`,
+    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p><br><p><strong>New Features</strong></p><p style="color: var(--accent-secondary);">- Added 15 brand-new color schemes to the 'themes' command, bringing the total number of available themes to 15. This update gives you even more options to customize and personalize your terminal experience exactly the way you like it, letting you choose from a wider range of styles, colors, and vibes so your terminal feels truly your own every time you use it</p><p style="color: var(--accent-secondary);">- Added the 'logs' command to display simulated system activity.</p></div>`,
     browser: (args) => { const u = args.trim(); if (!u) return `<p>Usage: browser [url]</p>`; if (!u.startsWith('http')) return `<p class="error-message">Invalid URL. Please include http:// or https://</p>`; return `<p class="error-message">⚠️ Note: Not all websites support being loaded in a frame.</p><p>Loading ${u}...</p><div style="width:100%; height:600px; border: 1px solid var(--outline); margin-top: 10px; background-color: white; border-radius: 8px; overflow: hidden;"><iframe src="${u}" style="width:100%; height:100%; border:none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe></div>`; },
     rm: (args) => {
         if (args.trim() !== '-rf') return `<p>rm: missing operand</p>`;
@@ -232,7 +308,24 @@ const commands = {
     calc: (args) => { try{if(!args)return"<p>Usage: calc [expression]</p>";const s=args.replace(/[^-()\d/*+.]/g,'');if(!s)return`<p class="error-message">Invalid characters.</p>`;return`<p>Result: ${new Function(`return ${s}`)()}</p>`}catch(e){return`<p class="error-message">Invalid expression.</p>`}},
     hide: (args) => { const target = args.trim().toLowerCase(); if (!target) return '<p>Usage: hide [music|video]</p>'; let hideBtn, name; if (target === 'music') { hideBtn = document.getElementById('hide-music-player'); name = 'Music player'; } else if (target === 'video') { hideBtn = document.getElementById('hide-video-player'); name = 'Video player'; } else { return `<p class="error-message">Cannot hide '${target}'. Valid options are 'music' or 'video'.</p>`; } if (hideBtn) { hideBtn.click(); const isHidden = hideBtn.innerHTML === '+'; return `<p>${isHidden ? 'Hiding' : 'Showing'} ${name}.</p>`; } else { return `<p class="error-message">${name} is not running.</p>`; } },
     tts: (args) => { if(!args.trim())return'<p>Usage: tts [text]</p>';if('speechSynthesis' in window){speechSynthesis.speak(new SpeechSynthesisUtterance(args));return'<p>Speaking...</p>'}else{return'<p class="error-message">TTS not supported.</p>'}},
-    reset: (args) => { if(args.trim()==='confirm'){deleteCookie('username');deleteCookie('hostname');deleteCookie('font');deleteCookie('lastLogin');deleteCookie('fontColor');localStorage.removeItem('orbitos_notes');localStorage.removeItem('orbitos_welcome_message');output.innerHTML='<p>Data reset. Rebooting...</p>';setTimeout(()=>window.location.reload(),1500);return''}return`<p class="error-message">WARNING: This will erase all saved settings and notes. Type <span class="highlight">reset confirm</span> to proceed.</p>`;},
+    reset: (args) => {
+        if (args.trim() === 'confirm') {
+            deleteCookie('username');
+            deleteCookie('hostname');
+            deleteCookie('font');
+            deleteCookie('lastLogin');
+            deleteCookie('fontColor');
+            deleteCookie('theme');
+            localStorage.removeItem('orbitos_notes');
+            localStorage.removeItem('orbitos_welcome_message');
+            applyFontColor(null);
+            applyTheme('default');
+            output.innerHTML = '<p>Data reset. Rebooting...</p>';
+            setTimeout(() => window.location.reload(), 1500);
+            return ''
+        }
+        return `<p class="error-message">WARNING: This will erase all saved settings and notes. Type <span class="highlight">reset confirm</span> to proceed.</p>`;
+    },
     setname: (args) => {
         const n = args.trim();
         if (!n) return '<p>Usage: setname [username]</p>';
@@ -283,12 +376,7 @@ const commands = {
             `;
             document.getElementById('bios-confirm-reset').onclick = () => {
                 biosContainer.innerHTML = '<h1>RESETTING DATA</h1><p>All user data is being erased. The system will reboot shortly...</p>';
-                deleteCookie('username');
-                deleteCookie('hostname');
-                deleteCookie('font');
-                deleteCookie('lastLogin');
-                localStorage.removeItem('orbitos_notes');
-                setTimeout(() => window.location.reload(), 2500);
+                commands.reset('confirm');
             };
             document.getElementById('bios-cancel-reset').onclick = () => {
                 commands.bios();
@@ -388,7 +476,7 @@ const commands = {
             }
             return '<p>No active game to stop.</p>';
         }
-        
+
         if (!guessTheNumberGame.isActive) {
             guessTheNumberGame.isActive = true;
             guessTheNumberGame.secretNumber = Math.floor(Math.random() * 100) + 1;
