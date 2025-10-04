@@ -22,7 +22,7 @@ function dragElement(elmnt, headerId) {
     function closeDragElement() { document.onmouseup = null; document.onmousemove = null; if (header) header.style.cursor = 'grab'; elmnt.style.transition = 'opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease'; }
 }
 
-const lastUpdatedDate = new Date('2025-10-02');
+const lastUpdatedDate = new Date('2025-10-04');
 
 let guessTheNumberGame = {
     isActive: false,
@@ -69,21 +69,26 @@ const commands = {
                     <p><span class="highlight-secondary">bios</span>             - Enter the BIOS utility</p>
                     <p><span class="highlight-secondary">shutdown</span>         - Shutsdown OrbitOS</p>
                     <p><span class="highlight-secondary">reboot</span>           - Reboots OrbitOS</p>
-                    <p><span class="highlight-secondary">rm</span>           - ...</p>
+                    <p><span class="highlight-secondary">rm</span>               - ...</p>
                     <br/>
                     <p>Type <span class="highlight">'help 3'</span> for more commands.</p>
                 `;
                 break;
             case 3:
                 output += `
-                    <p class="highlight">--- [ Tools, Games & Media ] ---</p>
+                    <p class="highlight">--- [ Tools, Games & Fun ] ---</p>
                     <p><span class="highlight-secondary">guess [number]</span>   - Play a number guessing game</p>
+                    <p><span class="highlight-secondary">cowsay [msg]</span>     - The cow says your message</p>
+                    <p><span class="highlight-secondary">fortune</span>          - Displays a random fortune cookie</p>
                     <p><span class="highlight-secondary">passgen [len]</span>    - Generates a random password</p>
                     <p><span class="highlight-secondary">notes</span>            - Manage your notes</p>
-                    <p><span class="highlight-secondary">browser [url]</span>    - Opens a URL in a frame</p>
                     <p><span class="highlight-secondary">calc [expr]</span>      - Calculate mathematical expression</p>
+                    <p><span class="highlight-secondary">translate [fr:to]</span>- Translates text</p>
                     <p><span class="highlight-secondary">wiki [query]</span>     - Search Wikipedia and display summary</p>
                     <p><span class="highlight-secondary">tts [text]</span>       - Text to speech</p>
+                    <br/>
+                    <p class="highlight">--- [ Media ] ---</p>
+                    <p><span class="highlight-secondary">browser [url]</span>    - Opens a URL in a frame</p>
                     <p><span class="highlight-secondary">hide [player]</span>    - Hides/shows the music or video player</p>
                     <p><span class="highlight-secondary">music</span>            - Opens the music player</p>
                     <p><span class="highlight-secondary">video</span>            - Opens the video player</p>
@@ -271,7 +276,58 @@ const commands = {
         close.onclick = stop; audio.ontimeupdate = () => { if (audio.duration) seek.value = (audio.currentTime / audio.duration) * 100; }; seek.oninput = () => { if (audio.duration) audio.currentTime = (seek.value / 100) * audio.duration; }; audio.onended = () => { playBtn.innerHTML = playIcon; seek.value = 0; audio.currentTime = 0; };
         dragElement(playerContainer, 'music-player-header'); return '<p>Opening music player...</p>';
     },
-    software: () => `<div style="line-height: 1.8;"><p><strong><span class="highlight">What's new in OrbitOS ${config.systemInfo.version}</span></strong></p><p>Last updated: ${lastUpdatedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p><br><p><strong>New Features</strong></p><p style="color: var(--accent-secondary);">- Added 15 brand-new color schemes to the 'themes' command, bringing the total number of available themes to 15. This update gives you even more options to customize and personalize your terminal experience exactly the way you like it, letting you choose from a wider range of styles, colors, and vibes so your terminal feels truly your own every time you use it</p><p style="color: var(--accent-secondary);">- Added the 'logs' command to display dynamic system activity.</p></div>`,
+    software: () => {
+        if (document.getElementById('software-container')) { document.getElementById('software-container').remove(); }
+        const swContainer = document.createElement('div');
+        swContainer.id = 'software-container';
+        swContainer.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 700px; max-width: 90vw; height: 500px;
+            background: var(--surface);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--outline); border-radius: 12px;
+            box-shadow: 0 10px 50px var(--glow);
+            z-index: 1000; color: var(--on-surface); font-family: 'Inter', sans-serif;
+            display: flex; flex-direction: column; animation: fadeIn 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;`;
+
+        swContainer.innerHTML = `
+            <div id="software-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline); cursor: grab;">
+                <span style="font-weight: 500; color: var(--on-surface);">Software Update</span>
+                <button id="close-software" style="background: #ff5f56; border: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease;" onmouseover="this.style.transform='scale(1.15)'; this.style.filter='brightness(1.2)';" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"></button>
+            </div>
+            <div id="software-body" style="padding: 20px; font-size: 0.9rem; line-height: 1.8; flex-grow: 1; overflow-y: auto;">
+                <p>Checking for updates...</p>
+            </div>`;
+        document.body.appendChild(swContainer);
+        document.getElementById('close-software').onclick = () => swContainer.remove();
+        dragElement(swContainer, 'software-header');
+
+        setTimeout(() => {
+            const body = document.getElementById('software-body');
+            if(body) {
+                body.innerHTML = `
+                    <p style="color: var(--success); font-weight: 500;">✓ You are using the latest version of OrbitOS.</p>
+                    <br>
+                    <p class="highlight">System Information</p>
+                    <p style="color: var(--accent-secondary);"><span style="width: 150px; display: inline-block;">OS Version</span>: ${config.systemInfo.version}</p>
+                    <p style="color: var(--accent-secondary);"><span style="width: 150px; display: inline-block;">Build Number</span>: ${config.systemInfo.build}</p>
+                    <p style="color: var(--accent-secondary);"><span style="width: 150px; display: inline-block;">Kernel</span>: ${config.systemInfo.kernel}</p>
+                    <p style="color: var(--accent-secondary);"><span style="width: 150px; display: inline-block;">Last Checked</span>: ${new Date().toLocaleString()}</p>
+                    <br>
+                    <p class="highlight">Changelog (v4.0)</p>
+                    <p style="color: var(--accent-secondary);"><span class="highlight-secondary">[+]</span> Added 'translate' command for live translation.</p>
+                    <p style="color: var(--accent-secondary);"><span class="highlight-secondary">[+]</span> Added 'cowsay' and 'fortune' for fun.</p>
+                    <p style="color: var(--accent-secondary);"><span class="highlight-secondary">[+]</span> Added 5 new font colors.</p>
+                    <p style="color: var(--accent-secondary);"><span class="highlight-secondary">[*]</span> other bug fixes</p>
+                    <p style="color: var(--accent-secondary);"><span class="highlight-secondary">[*]</span> Fixed a bug causing keyboard to open automatically on mobile.</p>
+                    <p style="color: var(--accent-secondary);"><span class="highlight-secondary">[*]</span> General performance and stability improvements.</p>
+                `;
+            }
+        }, 1500);
+
+        return '<p>Opening software information...</p>';
+    },
     browser: (args) => { const u = args.trim(); if (!u) return `<p>Usage: browser [url]</p>`; if (!u.startsWith('http')) return `<p class="error-message">Invalid URL. Please include http:// or https://</p>`; return `<p class="error-message">⚠️ Note: Not all websites support being loaded in a frame.</p><p>Loading ${u}...</p><div style="width:100%; height:600px; border: 1px solid var(--outline); margin-top: 10px; background-color: white; border-radius: 8px; overflow: hidden;"><iframe src="${u}" style="width:100%; height:100%; border:none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe></div>`; },
     rm: (args) => {
         if (args.trim() !== '-rf') return `<p>rm: missing operand</p>`;
@@ -292,12 +348,12 @@ const commands = {
     fonts: (args) => { const n=parseInt(args.trim()),f={1:"JetBrains Mono",2:"Fira Code",3:"Source Code Pro",4:"IBM Plex Mono",5:"Anonymous Pro",6:"Roboto Mono",7:"Space Mono",8:"Ubuntu Mono",9:"VT323",10:"Nanum Gothic Coding",11:"Cutive Mono",12:"Share Tech Mono",13:"Major Mono Display",14:"Nova Mono",15:"Syne Mono"};if(!args||isNaN(n)){let l='<p>Available fonts:</p>';for(const[i,m]of Object.entries(f)){l+=`<p>${i}. ${m}${i==1?' (Default)':''}</p>`}l+='<p>Usage: fonts [number]</p>';return l}if(applyFont(n)){setCookie('font',n,365);return`<p>Font set to ${f[n]}.</p>`}else{return'<p class="error-message">Invalid font number.</p>'}},
     clear: () => { output.innerHTML = ''; return ''; },
     echo: (args) => args ? `<p>${args.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : '<p>Nothing to echo.</p>',
-    stop: (args) => { const p=args.trim().toLowerCase(); if(!p)return'<p>Usage: stop [process]</p>';if(p==='music'){const m=document.getElementById('music-player-container');if(m){m.remove();return'<p>Music player stopped.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='video'){const v=document.getElementById('video-player-container');if(v){v.remove();return'<p>Video player stopped.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='fastfetch'){const f=document.getElementById('fastfetch-container');if(f){f.remove();return'<p>System info closed.</p>'}else{return'<p class="error-message">Not running.</p>'}}return`<p class="error-message">Process '${p}' not found.</p>`; },
+    stop: (args) => { const p=args.trim().toLowerCase(); if(!p)return'<p>Usage: stop [process]</p>';if(p==='music'){const m=document.getElementById('music-player-container');if(m){m.remove();return'<p>Music player stopped.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='video'){const v=document.getElementById('video-player-container');if(v){v.remove();return'<p>Video player stopped.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='fastfetch'){const f=document.getElementById('fastfetch-container');if(f){f.remove();return'<p>System info closed.</p>'}else{return'<p class="error-message">Not running.</p>'}}if(p==='software'){const s=document.getElementById('software-container');if(s){s.remove();return'<p>Software info closed.</p>'}else{return'<p class="error-message">Not running.</p>'}}return`<p class="error-message">Process '${p}' not found.</p>`; },
     date: () => `<p>${new Date().toLocaleString()}</p>`,
     whoami: () => `<p class="highlight-secondary">${config.username}@${config.hostname}</p>`,
     history: () => commandHistory.map((c, i) => `<p>${i + 1}. ${c}</p>`).join('') || '<p>No history.</p>',
     battery: () => { if(!config.batteryInfo.level)return`<p class="error-message">Battery API unavailable.</p>`;return`<p>Battery: ${config.batteryInfo.level}% (${config.batteryInfo.charging?'Charging':'Discharging'})</p>`;},
-    processes: () => { let r=`<p class="highlight">Processes:</p><p>system_core</p><p>terminal</p>`;if(document.getElementById('music-player-container'))r+=`<p>music_player</p>`;if(document.getElementById('video-player-container'))r+=`<p>video_player</p>`;if(document.getElementById('fastfetch-container'))r+=`<p>sys_info</p>`;return r;},
+    processes: () => { let r=`<p class="highlight">Processes:</p><p>system_core</p><p>terminal</p>`;if(document.getElementById('music-player-container'))r+=`<p>music_player</p>`;if(document.getElementById('video-player-container'))r+=`<p>video_player</p>`;if(document.getElementById('fastfetch-container'))r+=`<p>sys_info</p>`;if(document.getElementById('software-container'))r+=`<p>sw_update</p>`;return r;},
     shutdown: () => { isSystemBricked=true;inputField.disabled=true;prompt.style.display='none';setTimeout(()=>{document.body.innerHTML='<p style="font-family:var(--font-mono);text-align:center;padding:2rem;">System halted.</p>'},1000);return'<p>Shutting down...</p>';},
     reboot: () => { output.innerHTML='<p>Rebooting...</p>';inputField.disabled=true;prompt.style.display='none';setTimeout(()=>window.location.reload(),1500);return'';},
     restart: () => commands.reboot(),
@@ -429,7 +485,7 @@ const commands = {
         }
     },
     fontcolor: (args) => {
-        const colorMap = { 1: { name: 'Default', hex: '#c9d1d9' }, 2: { name: 'Mint', hex: '#80ffdb' }, 3: { name: 'Sky', hex: '#72ddf7' }, 4: { name: 'Sand', hex: '#f2e9c9' }, 5: { name: 'Lavender', hex: '#d7bce3' } };
+        const colorMap = { 1: { name: 'Default', hex: '#c9d1d9' }, 2: { name: 'Mint', hex: '#80ffdb' }, 3: { name: 'Sky', hex: '#72ddf7' }, 4: { name: 'Sand', hex: '#f2e9c9' }, 5: { name: 'Lavender', hex: '#d7bce3' }, 6: { name: 'Amber', hex: '#FFC107' }, 7: { name: 'Crimson', hex: '#DC143C' }, 8: { name: 'Lime', hex: '#00FF00' }, 9: { name: 'Violet', hex: '#EE82EE' }, 10: { name: 'Teal', hex: '#008080' } };
         const num = parseInt(args.trim());
         if (args.trim().toLowerCase() === 'reset') { applyFontColor(null); deleteCookie('fontColor'); return `<p>Font color reset to Default.</p>`; }
         if (!isNaN(num) && num >= 1 && num <= Object.keys(colorMap).length) { const color = colorMap[num].hex; applyFontColor(color); setCookie('fontColor', color, 365); return `<p>Font color changed to ${colorMap[num].name}.</p>`; }
@@ -496,6 +552,70 @@ const commands = {
             guessTheNumberGame.isActive = false;
             return message;
         }
+    },
+    translate: async (args) => {
+        const parts = args.split(' ');
+        if (parts.length < 2) return '<p>Usage: translate [from:to] [text]</p><p>Example: translate en:es Hello world</p>';
+        const langPair = parts[0];
+        const text = parts.slice(1).join(' ');
+        const [from, to] = langPair.split(':');
+        if (!to) return `<p class="error-message">Invalid language pair format. Use from:to (e.g., en:fr).</p>`;
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.responseStatus !== 200) {
+                return `<p class="error-message">Translation failed: ${data.responseDetails}</p>`;
+            }
+            return `<p>"<span class="highlight">${data.responseData.translatedText}</span>"</p>`;
+        } catch (error) {
+            return '<p class="error-message">Failed to connect to translation service.</p>';
+        }
+    },
+    cowsay: (args) => {
+        const message = args.trim() || "Moo!";
+        const lines = message.split('\n');
+        const maxLength = Math.max(...lines.map(line => line.length));
+        
+        const pad = (str, len) => str + ' '.repeat(len - str.length);
+
+        let bubble = ' ' + '_'.repeat(maxLength + 2) + '\n';
+        if (lines.length === 1) {
+            bubble += `< ${message} >\n`;
+        } else {
+            bubble += `/ ${pad(lines[0], maxLength)} \\\n`;
+            for (let i = 1; i < lines.length - 1; i++) {
+                bubble += `| ${pad(lines[i], maxLength)} |\n`;
+            }
+            bubble += `\\ ${pad(lines[lines.length - 1], maxLength)} /\n`;
+        }
+        bubble += ' ' + '-'.repeat(maxLength + 2);
+
+        const cow = `
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||`;
+        
+        const escapeHTML = (str) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+        return `<pre style="line-height: 1.2; user-select: text;">${escapeHTML(bubble)}${escapeHTML(cow)}</pre>`;
+    },
+    fortune: () => {
+        const fortunes = [
+            "The early bird gets the worm, but the second mouse gets the cheese.",
+            "A conclusion is the place where you got tired of thinking.",
+            "He who laughs last thinks slowest.",
+            "The journey of a thousand miles begins with a single step... and a broken fan belt.",
+            "You will be hungry again in one hour.",
+            "A day without sunshine is like, you know, night.",
+            "If at first you don't succeed, skydiving is not for you.",
+            "Never trust a computer you can't throw out a window.",
+            "An expert is someone who knows more and more about less and less, until they know absolutely everything about nothing."
+        ];
+        const randomIndex = Math.floor(Math.random() * fortunes.length);
+        return `<p>${fortunes[randomIndex]}</p>`;
     }
 };
 
